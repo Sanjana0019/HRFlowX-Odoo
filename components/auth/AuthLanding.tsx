@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import {
   Sparkles,
   Shield,
@@ -137,8 +138,15 @@ export function AuthLanding() {
       {/* Top Brand Bar */}
       <header className="flex h-20 items-center justify-between px-6 sm:px-12 border-b border-[var(--border)] glass-navbar">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 shadow-md shadow-indigo-500/20">
-            <Sparkles className="h-5 w-5 text-white" />
+          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl">
+            <Image
+              src="/hr-logo.png"
+              alt="HRFlowX logo"
+              fill
+              sizes="40px"
+              className="object-contain"
+              priority
+            />
           </div>
           <div>
             <div className="flex items-center gap-1.5">

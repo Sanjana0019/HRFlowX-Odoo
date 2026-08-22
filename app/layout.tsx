@@ -13,7 +13,12 @@ export const metadata: Metadata = {
   description:
     "HRFlowX: Streamline People, Power Performance. Enterprise HRMS platform with biometric attendance tracking, dynamic wage formulas, automated leave balance management, and compliance governance.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon-16.png?v=4", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32.png?v=4", sizes: "32x32", type: "image/png" },
+    ],
+    shortcut: "/favicon-32.png?v=4",
+    apple: "/favicon-32.png?v=4",
   },
 };
 

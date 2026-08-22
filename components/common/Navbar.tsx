@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import {
   Bell,
   Search,
@@ -51,6 +52,7 @@ export function Navbar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isBrandLogoMissing, setIsBrandLogoMissing] = useState(false);
 
   const isAdmin = currentUser?.role === "admin" || currentUser?.role === "hr";
 
@@ -73,8 +75,22 @@ export function Navbar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             onClick={() => setActiveView("dashboard")}
             className="flex items-center gap-2.5 cursor-pointer group select-none"
           >
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 shadow-sm shadow-indigo-500/20 transition-transform duration-200 group-hover:scale-105">
-              <Sparkles className="h-4.5 w-4.5 text-white" />
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl transition-transform duration-200 group-hover:scale-105">
+              {isBrandLogoMissing ? (
+                <div className="flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 shadow-sm shadow-indigo-500/20">
+                  <Sparkles className="h-4.5 w-4.5 text-white" />
+                </div>
+              ) : (
+                <Image
+                  src="/hr-logo.png"
+                  alt="HRFlowX logo"
+                  fill
+                  sizes="40px"
+                  className="object-contain"
+                  priority
+                  onError={() => setIsBrandLogoMissing(true)}
+                />
+              )}
             </div>
             <div>
               <div className="flex items-center gap-1.5">
