@@ -12,6 +12,7 @@ import {
   FileCheck,
   Building,
   UserCheck,
+  Layers,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { Avatar } from "@/components/ui/avatar";
@@ -19,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { AttendanceRecord, AttendanceStatus, AttendanceCorrectionRequest } from "@/types";
 
 export function AttendanceMasterView() {
@@ -78,214 +80,245 @@ export function AttendanceMasterView() {
   };
 
   const handleApprove = (id: string) => {
-    approveAttendanceCorrectionRequest(id, reviewComment || "Approved by HR.");
+    approveAttendanceCorrectionRequest(id, reviewComment || "Approved by HR Administrator");
     setSelectedReq(null);
     setReviewComment("");
   };
 
   const handleReject = (id: string) => {
-    rejectAttendanceCorrectionRequest(id, reviewComment || "Declined.");
+    rejectAttendanceCorrectionRequest(id, reviewComment || "Declined: Record does not match badge logs.");
     setSelectedReq(null);
     setReviewComment("");
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Clock className="h-6 w-6 text-indigo-400" />
-            Company-Wide Attendance Master & Timesheet Approvals
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)] flex items-center gap-2.5">
+            <Clock className="h-6 w-6 text-indigo-500" />
+            Company Timesheets & Biometric Master
           </h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Audit workforce punctuality, analyze timesheets, and review punch correction requests.
+          <p className="text-xs sm:text-sm text-[var(--foreground-muted)] mt-0.5">
+            Audit company-wide daily work records and review employee punch adjustments.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 text-xs font-semibold">
-            <Download className="h-3.5 w-3.5" /> Export Company Master (.CSV)
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            className="gap-1.5 font-semibold text-xs"
+          >
+            <Download className="h-4 w-4" />
+            Export Master CSV
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+      {/* Tabs Switcher: Master Log vs Correction Requests */}
+      <div className="flex p-1 rounded-2xl bg-[var(--secondary)] border border-[var(--border-subtle)] max-w-md">
         <button
           onClick={() => setActiveTab("master")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             activeTab === "master"
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+              : "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
           }`}
         >
-          <Clock className="h-3.5 w-3.5" /> All Timesheet Records ({attendanceRecords.length})
+          Company Timesheet Log ({attendanceRecords.length})
         </button>
-
         <button
           onClick={() => setActiveTab("requests")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all relative ${
+          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === "requests"
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+              : "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
           }`}
         >
-          <FileCheck className="h-3.5 w-3.5" /> Correction Requests
+          <span>Correction Requests</span>
           {pendingRequests.length > 0 && (
-            <span className="h-5 min-w-5 px-1.5 rounded-full bg-amber-500 text-[10px] font-bold text-black flex items-center justify-center">
+            <Badge variant="warning" size="xs">
               {pendingRequests.length}
-            </span>
+            </Badge>
           )}
         </button>
       </div>
 
       {activeTab === "master" ? (
-        <Card>
-          <CardHeader className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pb-4 border-b border-slate-800">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by employee, login ID, date..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-700 bg-slate-900/80 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
+        <div className="space-y-4">
+          {/* Filters Bar */}
+          <Card>
+            <CardContent className="p-4 flex flex-col md:flex-row items-center gap-3">
+              <div className="w-full md:flex-1">
+                <Input
+                  type="text"
+                  placeholder="Search by employee name, ID, or date (YYYY-MM-DD)..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  leftIcon={<Search className="h-4 w-4" />}
+                />
+              </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="h-10 px-3 rounded-xl border border-slate-700 bg-slate-900/80 text-xs text-slate-200"
-              >
-                <option value="all">All Departments</option>
-                {departments.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
+              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                <select
+                  value={departmentFilter}
+                  onChange={(e) => setDepartmentFilter(e.target.value)}
+                  className="h-10 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+                >
+                  <option value="all">All Departments</option>
+                  {departments.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 px-3 rounded-xl border border-slate-700 bg-slate-900/80 text-xs text-slate-200"
-              >
-                <option value="all">All Statuses</option>
-                <option value="present">Present</option>
-                <option value="late">Late</option>
-                <option value="half_day">Half Day</option>
-                <option value="on_leave">On Leave</option>
-                <option value="absent">Absent</option>
-              </select>
-            </div>
-          </CardHeader>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="h-10 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+                >
+                  <option value="all">All Status</option>
+                  <option value="present">Present</option>
+                  <option value="late">Late</option>
+                  <option value="half_day">Half Day</option>
+                  <option value="on_leave">On Leave</option>
+                  <option value="absent">Absent</option>
+                </select>
+              </div>
+            </CardContent>
+          </Card>
 
-          <CardContent className="p-0">
+          {/* Master Records Data Table */}
+          <Card>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b border-slate-800 bg-slate-900/90 text-slate-400 font-semibold uppercase tracking-wider">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="border-b border-[var(--border)] bg-[var(--background-subtle)] text-[var(--foreground-muted)] font-semibold uppercase tracking-wider text-[10px] font-sans">
                   <tr>
-                    <th className="px-5 py-3.5">Employee</th>
-                    <th className="px-5 py-3.5">Date</th>
-                    <th className="px-5 py-3.5">Check In</th>
-                    <th className="px-5 py-3.5">Check Out</th>
-                    <th className="px-5 py-3.5">Status</th>
-                    <th className="px-5 py-3.5">Hours</th>
-                    <th className="px-5 py-3.5">Location</th>
-                    <th className="px-5 py-3.5">Audit Note</th>
+                    <th className="px-4 py-3">Employee</th>
+                    <th className="px-4 py-3">Login ID</th>
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Check In</th>
+                    <th className="px-4 py-3">Check Out</th>
+                    <th className="px-4 py-3">Duration</th>
+                    <th className="px-4 py-3">Location</th>
+                    <th className="px-4 py-3">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                  {filteredRecords.slice(0, 50).map((r) => (
-                    <tr key={r.id} className="hover:bg-slate-800/40">
-                      <td className="px-5 py-3.5 whitespace-nowrap">
+                <tbody className="divide-y divide-[var(--border-subtle)]">
+                  {filteredRecords.map((r) => (
+                    <tr key={r.id} className="hover:bg-[var(--secondary)] transition-colors">
+                      <td className="px-4 py-3 font-sans">
                         <div className="flex items-center gap-2.5">
-                          <Avatar src={r.employeeAvatar} name={r.employeeName} size="xs" />
-                          <div>
-                            <span className="font-bold text-white block">{r.employeeName}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">{r.employeeId}</span>
-                          </div>
+                          <Avatar src={r.employeeAvatar} alt={r.employeeName} size="xs" />
+                          <span className="font-bold text-[var(--foreground)]">{r.employeeName}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 text-white font-medium whitespace-nowrap">{r.date}</td>
-                      <td className="px-5 py-3.5 font-mono text-emerald-400 whitespace-nowrap">{r.checkIn || "--:--"}</td>
-                      <td className="px-5 py-3.5 font-mono text-slate-300 whitespace-nowrap">{r.checkOut || "--:--"}</td>
-                      <td className="px-5 py-3.5 whitespace-nowrap">
-                        <Badge variant={r.status === "present" ? "success" : r.status === "late" ? "amber" : r.status === "on_leave" ? "purple" : "outline"} size="sm" className="capitalize">
-                          {r.status.replace("_", " ")}
+                      <td className="px-4 py-3 text-indigo-600 dark:text-indigo-400 font-semibold">{r.employeeId}</td>
+                      <td className="px-4 py-3 text-[var(--foreground)]">{r.date}</td>
+                      <td className="px-4 py-3 text-emerald-600 dark:text-emerald-400">{r.checkIn || "—"}</td>
+                      <td className="px-4 py-3 text-indigo-600 dark:text-indigo-400">{r.checkOut || "—"}</td>
+                      <td className="px-4 py-3 text-[var(--foreground-muted)]">{r.workingHours || "0h 0m"}</td>
+                      <td className="px-4 py-3 font-sans text-[var(--foreground-subtle)]">{r.location || "Office"}</td>
+                      <td className="px-4 py-3 font-sans">
+                        <Badge
+                          variant={
+                            r.status === "present"
+                              ? "success"
+                              : r.status === "late"
+                              ? "warning"
+                              : r.status === "on_leave"
+                              ? "purple"
+                              : "neutral"
+                          }
+                          size="xs"
+                          dot
+                        >
+                          {r.status}
                         </Badge>
                       </td>
-                      <td className="px-5 py-3.5 font-mono text-white whitespace-nowrap">{r.workingHours || "--"}</td>
-                      <td className="px-5 py-3.5 text-slate-400 whitespace-nowrap">{r.location || "Office"}</td>
-                      <td className="px-5 py-3.5 text-slate-400 max-w-xs truncate">{r.notes || "-"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </CardContent>
-        </Card>
+          </Card>
+        </div>
       ) : (
-        /* Correction Requests Tab */
-        <Card>
-          <CardHeader className="pb-4 border-b border-slate-800">
-            <CardTitle className="text-base">Timesheet Correction Requests</CardTitle>
-            <p className="text-xs text-slate-400">Review employee punch adjustment requests</p>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-slate-800/60">
-              {attendanceRequests.map((req) => (
-                <div key={req.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-800/40 transition-colors">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2.5">
-                      <Avatar src={req.employeeAvatar} name={req.employeeName} size="xs" />
-                      <span className="text-sm font-bold text-white">{req.employeeName}</span>
-                      <Badge variant="blue" size="sm">{req.department}</Badge>
-                      <Badge variant={req.status === "approved" ? "success" : req.status === "rejected" ? "destructive" : "amber"} size="sm" className="capitalize">
-                        {req.status}
-                      </Badge>
+        /* Correction Requests Review Queue */
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {attendanceRequests.map((req) => (
+              <div
+                key={req.id}
+                className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-[var(--shadow-card)] space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar src={req.employeeAvatar} alt={req.employeeName} size="sm" />
+                    <div>
+                      <span className="text-xs font-bold text-[var(--foreground)] block">{req.employeeName}</span>
+                      <span className="text-[10px] text-[var(--foreground-subtle)] font-mono">{req.employeeId}</span>
                     </div>
-
-                    <div className="text-xs text-slate-300">
-                      <span className="text-slate-400">Target Date: </span>
-                      <span className="font-semibold text-white">{req.date}</span>
-                      <span className="text-slate-500 mx-2">•</span>
-                      <span className="text-slate-400">Requested Shift: </span>
-                      <span className="font-mono text-emerald-400 font-bold">{req.requestedCheckIn} - {req.requestedCheckOut}</span>
-                    </div>
-
-                    <p className="text-xs text-slate-400 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
-                      <span className="text-indigo-300 font-semibold">Reason: </span>
-                      {req.reason}
-                    </p>
                   </div>
-
-                  {req.status === "pending" && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleApprove(req.id)}
-                        className="gap-1.5 text-xs font-semibold"
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Approve Adjustment
-                      </Button>
-
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleReject(req.id)}
-                        className="gap-1.5 text-xs font-semibold"
-                      >
-                        <XCircle className="h-3.5 w-3.5" /> Reject
-                      </Button>
-                    </div>
-                  )}
+                  <Badge
+                    variant={
+                      req.status === "approved"
+                        ? "success"
+                        : req.status === "pending"
+                        ? "warning"
+                        : "destructive"
+                    }
+                    size="xs"
+                  >
+                    {req.status}
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+
+                <div className="p-3 rounded-xl bg-[var(--secondary)] border border-[var(--border-subtle)] space-y-1 text-xs">
+                  <div className="flex justify-between font-mono">
+                    <span className="text-[var(--foreground-muted)]">Target Date:</span>
+                    <span className="font-bold text-[var(--foreground)]">{req.date}</span>
+                  </div>
+                  <div className="flex justify-between font-mono">
+                    <span className="text-[var(--foreground-muted)]">Requested Punch:</span>
+                    <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
+                      {req.requestedCheckIn} – {req.requestedCheckOut}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-[var(--foreground-muted)] italic leading-relaxed">
+                  "{req.reason}"
+                </p>
+
+                {req.status === "pending" && (
+                  <div className="flex items-center gap-2 pt-2 border-t border-[var(--border-subtle)]">
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => handleReject(req.id)}
+                      className="flex-1 text-rose-600 dark:text-rose-400 font-semibold"
+                    >
+                      Decline
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="xs"
+                      onClick={() => handleApprove(req.id)}
+                      className="flex-1 font-semibold"
+                    >
+                      Approve →
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

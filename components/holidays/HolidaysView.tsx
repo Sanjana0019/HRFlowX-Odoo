@@ -38,81 +38,133 @@ export function HolidaysView() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Calendar className="h-6 w-6 text-indigo-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)] flex items-center gap-2.5">
+            <Calendar className="h-6 w-6 text-indigo-500" />
             Corporate Holiday Calendar (2026)
           </h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Official paid holidays and observed non-working office closures.
+          <p className="text-xs sm:text-sm text-[var(--foreground-muted)] mt-0.5">
+            Official paid holidays and observed non-working office closures across all branches.
           </p>
         </div>
 
         {isAdmin && (
-          <Button variant="primary" size="sm" onClick={() => setIsModalOpen(true)} className="gap-1.5 font-semibold">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsModalOpen(true)}
+            className="gap-1.5 font-semibold text-xs shadow-sm"
+          >
             <Plus className="h-4 w-4" /> Add Holiday
           </Button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Holidays Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {holidays.map((h) => (
-          <Card key={h.id} className="p-4 border-slate-800 bg-slate-900/80 hover:border-slate-700 transition-all flex flex-col justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Badge variant={h.type === "National Holiday" ? "blue" : "purple"} size="sm">
-                  {h.type}
-                </Badge>
-                {isAdmin && (
-                  <button onClick={() => deleteHoliday(h.id)} className="text-slate-500 hover:text-rose-400">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
+          <div
+            key={h.id}
+            className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-[var(--shadow-card)] space-y-3 text-xs"
+          >
+            <div className="flex items-start justify-between">
+              <span className="font-bold text-[var(--foreground)] text-sm">{h.name}</span>
+              <Badge variant="purple" size="xs">
+                {h.type}
+              </Badge>
+            </div>
+
+            <div className="p-3 rounded-xl bg-[var(--secondary)] border border-[var(--border-subtle)] space-y-0.5">
+              <span className="text-indigo-600 dark:text-indigo-400 font-mono font-bold block text-sm">
+                {h.date}
+              </span>
+              <span className="text-[11px] text-[var(--foreground-subtle)] font-medium block">
+                {h.dayOfWeek}
+              </span>
+            </div>
+
+            <p className="text-[var(--foreground-muted)] leading-relaxed">{h.description}</p>
+
+            {isAdmin && (
+              <div className="flex justify-end pt-1">
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => deleteHoliday(h.id)}
+                  className="text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
-
-              <h3 className="text-sm font-bold text-white mt-1">{h.name}</h3>
-              <p className="text-xs text-slate-400">{h.description}</p>
-            </div>
-
-            <div className="pt-3 mt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-              <span className="font-mono text-indigo-300 font-semibold">{h.date}</span>
-              <span className="text-slate-400">{h.dayOfWeek}</span>
-            </div>
-          </Card>
+            )}
+          </div>
         ))}
       </div>
 
-      <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Holiday" maxWidth="md">
+      {/* Add Holiday Modal */}
+      <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Corporate Holiday">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Holiday Name</label>
-            <Input placeholder="e.g. Thanksgiving Day" value={name} onChange={(e) => setName(e.target.value)} required />
+            <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+              Holiday Name
+            </label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Independence Day"
+              required
+            />
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                Date
+              </label>
+              <Input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                Type
+              </label>
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value as any)}
+                className="h-10 w-full px-3.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+              >
+                <option value="National Holiday">National Holiday</option>
+                <option value="Regional Holiday">Regional Holiday</option>
+                <option value="Optional Holiday">Optional Floating</option>
+              </select>
+            </div>
+          </div>
+
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Date</label>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+            <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+              Description Note
+            </label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. Office closed globally"
+            />
           </div>
-          <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Type</label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as any)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-700 bg-slate-900 text-xs text-white"
-            >
-              <option value="National Holiday">National Holiday</option>
-              <option value="Company Holiday">Company Holiday</option>
-              <option value="Optional Holiday">Optional Holiday</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Description</label>
-            <Input placeholder="Observance note" value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="primary" size="sm">Save Holiday</Button>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
+            <Button variant="secondary" size="sm" type="button" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" type="submit">
+              Save Holiday →
+            </Button>
           </div>
         </form>
       </Dialog>

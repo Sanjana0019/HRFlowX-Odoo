@@ -278,15 +278,46 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   });
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoadingEmployees, setIsLoadingEmployees] = useState<boolean>(false);
-
   // UI state
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
   const [activeView, setActiveView] = useState<string>("dashboard");
   const [employeeViewMode, setEmployeeViewMode] = useState<"grid" | "table">("grid");
   const [selectedEmployeeForModal, setSelectedEmployeeForModal] = useState<Employee | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+  // Sync theme with DOM and localStorage
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem("hrflowx_theme") as "dark" | "light" | null;
+      if (savedTheme) {
+        setTheme(savedTheme);
+        if (savedTheme === "dark") {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      localStorage.setItem("hrflowx_theme", theme);
+    } catch {}
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
 
   // Fetch employees from Supabase if configured
   useEffect(() => {
@@ -887,8 +918,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       targetRole: "employee",
     });
   };
-
-  const toggleTheme = () => setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
   const resetToDefaultData = () => {
     localStorage.removeItem(STORAGE_KEY);

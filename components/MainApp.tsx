@@ -35,7 +35,7 @@ import { NotificationCenterView } from "@/components/common/NotificationCenterVi
 import { SettingsView } from "@/components/common/SettingsView";
 
 export function MainApp() {
-  const { isAuthenticated, currentUser, activeView } = useStore();
+  const { isAuthenticated, currentUser, activeView, setActiveView } = useStore();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   if (!isAuthenticated || !currentUser) {
@@ -48,17 +48,17 @@ export function MainApp() {
     // Strict Role-Based View Guard
     if (!isAdmin && activeView === "audit") {
       return (
-        <div className="p-12 text-center space-y-4 rounded-3xl border border-rose-500/30 bg-rose-950/20 max-w-lg mx-auto mt-12">
-          <div className="h-12 w-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto text-xl font-bold">
+        <div className="p-10 text-center space-y-4 rounded-3xl border border-rose-500/20 bg-rose-500/5 max-w-lg mx-auto mt-12">
+          <div className="h-12 w-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto text-xl font-bold">
             ✕
           </div>
-          <h2 className="text-lg font-bold text-white">Access Restricted</h2>
-          <p className="text-xs text-slate-300">
+          <h2 className="text-lg font-bold text-[var(--foreground)]">Access Restricted</h2>
+          <p className="text-xs text-[var(--foreground-muted)]">
             You do not have administrative privileges to view company-wide compliance audit logs.
           </p>
           <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 rounded-xl bg-slate-800 text-xs font-semibold text-white hover:bg-slate-700"
+            onClick={() => setActiveView("dashboard")}
+            className="px-4 py-2 rounded-xl bg-[var(--secondary)] hover:bg-[var(--secondary-hover)] text-xs font-semibold text-[var(--foreground)] border border-[var(--border)] cursor-pointer"
           >
             Return to Dashboard
           </button>
@@ -107,37 +107,37 @@ export function MainApp() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-950 text-slate-100 antialiased overflow-hidden selection:bg-indigo-500 selection:text-white">
+    <div className="flex h-screen w-full bg-[var(--background)] text-[var(--foreground)] antialiased overflow-hidden selection:bg-indigo-500 selection:text-white transition-colors">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block h-full flex-shrink-0">
+      <div className="hidden md:flex md:shrink-0">
         <Sidebar />
       </div>
 
-      {/* Mobile Sidebar Backdrop & Drawer */}
+      {/* Mobile Sidebar Overlay Drawer */}
       {isMobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 flex md:hidden animate-fade-in">
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setIsMobileSidebarOpen(false)}
           />
-          <div className="fixed inset-y-0 left-0 w-72 bg-slate-950 shadow-2xl z-50">
+          <div className="relative z-10 w-72 h-full bg-[var(--background)] shadow-2xl">
             <Sidebar onCloseMobile={() => setIsMobileSidebarOpen(false)} />
           </div>
         </div>
       )}
 
-      {/* Main Workspace Frame */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Navbar onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} />
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+        <Navbar onToggleSidebar={() => setIsMobileSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
+          <div className="max-w-7xl mx-auto w-full animate-fade-in">
             {renderActiveView()}
           </div>
         </main>
       </div>
 
-      {/* Global Cmd+K Search Command Palette */}
+      {/* Command Palette Overlay */}
       <CommandPalette />
     </div>
   );

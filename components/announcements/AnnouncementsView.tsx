@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
-import { Input, Textarea } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Announcement } from "@/types";
 
 export function AnnouncementsView() {
@@ -43,88 +43,128 @@ export function AnnouncementsView() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Megaphone className="h-6 w-6 text-indigo-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)] flex items-center gap-2.5">
+            <Megaphone className="h-6 w-6 text-indigo-500" />
             Company Announcements & Town Hall News
           </h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Broadcast updates, executive announcements, and event notices to the global workforce.
+          <p className="text-xs sm:text-sm text-[var(--foreground-muted)] mt-0.5">
+            Broadcast organizational updates, executive notices, and quarterly town hall schedules.
           </p>
         </div>
 
         {isAdmin && (
-          <Button variant="primary" size="sm" onClick={() => setIsModalOpen(true)} className="gap-1.5 font-semibold">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsModalOpen(true)}
+            className="gap-1.5 font-semibold text-xs shadow-sm"
+          >
             <Plus className="h-4 w-4" /> Post Announcement
           </Button>
         )}
       </div>
 
+      {/* Announcements Stream */}
       <div className="space-y-4">
         {announcements.map((a) => (
-          <Card key={a.id} className="p-5 border-slate-800 bg-slate-900/90 hover:border-slate-700 transition-all">
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2.5">
+          <div
+            key={a.id}
+            className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-[var(--shadow-card)] space-y-3"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-[var(--foreground)]">{a.title}</h3>
                   <Badge
-                    variant={a.priority === "high" ? "destructive" : a.priority === "medium" ? "amber" : "blue"}
-                    size="sm"
-                    className="capitalize"
+                    variant={
+                      a.priority === "high"
+                        ? "destructive"
+                        : a.priority === "medium"
+                        ? "purple"
+                        : "neutral"
+                    }
+                    size="xs"
+                    className="uppercase"
                   >
                     {a.priority} Priority
                   </Badge>
-                  <h3 className="text-base font-bold text-white">{a.title}</h3>
                 </div>
-
-                <p className="text-xs text-slate-300 leading-relaxed max-w-4xl">{a.content}</p>
-
-                <div className="flex items-center gap-4 text-[11px] text-slate-500 font-mono pt-1">
-                  <span>Author: {a.authorName}</span>
-                  <span>•</span>
-                  <span>Published: {a.publishDate}</span>
-                </div>
+                <p className="text-[11px] text-[var(--foreground-subtle)] font-mono">
+                  Posted by {a.authorName} • {a.publishDate}
+                </p>
               </div>
 
               {isAdmin && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="xs"
                   onClick={() => deleteAnnouncement(a.id)}
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors self-end sm:self-start"
+                  className="text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
                 >
                   <Trash2 className="h-4 w-4" />
-                </button>
+                </Button>
               )}
             </div>
-          </Card>
+
+            <p className="text-xs text-[var(--foreground-muted)] leading-relaxed">{a.content}</p>
+          </div>
         ))}
       </div>
 
-      <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Broadcast Announcement" maxWidth="md">
+      {/* Post Modal */}
+      <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Broadcast Announcement">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Headline</label>
-            <Input placeholder="Announcement Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+              Headline Title
+            </label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Q3 All-Hands Town Hall & Financial Review"
+              required
+            />
           </div>
+
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Priority</label>
+            <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+              Priority Urgency
+            </label>
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as any)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-700 bg-slate-900 text-xs text-white"
+              className="h-10 w-full px-3.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
             >
-              <option value="high">High Priority (Urgent)</option>
+              <option value="low">Standard Info</option>
               <option value="medium">Medium Priority</option>
-              <option value="low">Low Priority / General Notice</option>
+              <option value="high">High Urgency / Mandatory</option>
             </select>
           </div>
+
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Message Content</label>
-            <Textarea placeholder="Details for the announcement..." value={content} onChange={(e) => setContent(e.target.value)} rows={4} required />
+            <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+              Broadcast Message
+            </label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Write the company-wide communication message..."
+              className="w-full h-24 p-3 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+              required
+            />
           </div>
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="primary" size="sm">Broadcast</Button>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
+            <Button variant="secondary" size="sm" type="button" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" type="submit">
+              Publish Broadcast →
+            </Button>
           </div>
         </form>
       </Dialog>

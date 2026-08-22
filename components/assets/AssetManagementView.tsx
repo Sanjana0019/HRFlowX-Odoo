@@ -29,14 +29,14 @@ export function AssetManagementView() {
   const [assetName, setAssetName] = useState("");
   const [category, setCategory] = useState<Asset["category"]>("Laptop");
   const [serialNumber, setSerialNumber] = useState("");
-  const [selectedEmpId, setSelectedEmpId] = useState(currentUser?.employeeId || "HXAR20230001");
+  const [selectedEmpId, setSelectedEmpId] = useState(currentUser?.employeeId || "HXAS20230001");
 
   const filteredAssets = assets.filter((a) => {
     const matchesSearch =
       a.assetName.toLowerCase().includes(search.toLowerCase()) ||
       a.assetId.toLowerCase().includes(search.toLowerCase()) ||
       (a.employeeName && a.employeeName.toLowerCase().includes(search.toLowerCase()));
-    
+
     if (!isAdmin) {
       return matchesSearch && a.employeeId === currentUser?.employeeId;
     }
@@ -67,162 +67,177 @@ export function AssetManagementView() {
 
   const getCategoryIcon = (cat: Asset["category"]) => {
     switch (cat) {
-      case "Laptop": return <Laptop className="h-4 w-4 text-indigo-400" />;
-      case "Monitor": return <Monitor className="h-4 w-4 text-blue-400" />;
-      case "Phone": return <Smartphone className="h-4 w-4 text-emerald-400" />;
-      default: return <HardDrive className="h-4 w-4 text-purple-400" />;
+      case "Laptop":
+        return <Laptop className="h-5 w-5 text-indigo-500" />;
+      case "Monitor":
+        return <Monitor className="h-5 w-5 text-purple-500" />;
+      case "Phone":
+        return <Smartphone className="h-5 w-5 text-emerald-500" />;
+      default:
+        return <HardDrive className="h-5 w-5 text-sky-500" />;
     }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Laptop className="h-6 w-6 text-indigo-400" />
-            Hardware & Corporate Asset Vault
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)] flex items-center gap-2.5">
+            <Laptop className="h-6 w-6 text-indigo-500" />
+            Hardware Assets & Equipment Registry
           </h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Track hardware provisions, developer workstations, monitor assignments, and security badges.
+          <p className="text-xs sm:text-sm text-[var(--foreground-muted)] mt-0.5">
+            Track corporate hardware inventory, serial numbers, and employee assignments.
           </p>
         </div>
 
         {isAdmin && (
-          <Button variant="primary" size="sm" onClick={() => setIsModalOpen(true)} className="gap-1.5 font-semibold">
-            <Plus className="h-4 w-4" /> Register Asset
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsModalOpen(true)}
+            className="gap-1.5 font-semibold text-xs shadow-sm"
+          >
+            <Plus className="h-4 w-4" /> Provision Asset
           </Button>
         )}
       </div>
 
+      {/* Filter / Search Bar */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-slate-800">
-          <div>
-            <CardTitle className="text-base">Asset Inventory ({filteredAssets.length})</CardTitle>
-            <p className="text-xs text-slate-400">Assigned hardware encrypted with corporate MDM profiles</p>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-800 bg-slate-900/90 text-slate-400 font-semibold uppercase tracking-wider">
-                <tr>
-                  <th className="px-5 py-3.5">Asset</th>
-                  <th className="px-5 py-3.5">Asset Tag</th>
-                  <th className="px-5 py-3.5">Serial Number</th>
-                  <th className="px-5 py-3.5">Assigned To</th>
-                  <th className="px-5 py-3.5">Assigned Date</th>
-                  <th className="px-5 py-3.5">Status</th>
-                  {isAdmin && <th className="px-5 py-3.5 text-right">Actions</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                {filteredAssets.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-500">
-                      No assets found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredAssets.map((a) => (
-                    <tr key={a.id} className="hover:bg-slate-800/40">
-                      <td className="px-5 py-3.5 whitespace-nowrap">
-                        <div className="flex items-center gap-2.5">
-                          <div className="p-2 rounded-xl bg-slate-800 border border-slate-700">
-                            {getCategoryIcon(a.category)}
-                          </div>
-                          <div>
-                            <span className="font-semibold text-white block">{a.assetName}</span>
-                            <span className="text-[10px] text-slate-400">{a.category}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 font-mono text-indigo-300 whitespace-nowrap font-medium">
-                        {a.assetId}
-                      </td>
-                      <td className="px-5 py-3.5 font-mono text-slate-300 whitespace-nowrap">
-                        {a.serialNumber}
-                      </td>
-                      <td className="px-5 py-3.5 whitespace-nowrap">
-                        {a.employeeName ? (
-                          <div>
-                            <span className="font-semibold text-white block">{a.employeeName}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">{a.employeeId}</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-500 italic">Unassigned (In Inventory)</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-slate-400 whitespace-nowrap">
-                        {a.assignedDate || "-"}
-                      </td>
-                      <td className="px-5 py-3.5 whitespace-nowrap">
-                        <Badge variant={a.status === "assigned" ? "success" : "blue"} size="sm" className="capitalize">
-                          {a.status}
-                        </Badge>
-                      </td>
-                      {isAdmin && (
-                        <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                          <button
-                            onClick={() => deleteAsset(a.id)}
-                            className="p-1 text-slate-500 hover:text-rose-400"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <CardContent className="p-4">
+          <Input
+            placeholder="Search hardware by name, asset ID, or assigned employee..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            leftIcon={<Search className="h-4 w-4" />}
+          />
         </CardContent>
       </Card>
 
-      <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Register Corporate Asset" maxWidth="md">
+      {/* Assets Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredAssets.map((asset) => (
+          <div
+            key={asset.id}
+            className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-[var(--shadow-card)] space-y-4 text-xs"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--secondary)] border border-[var(--border-subtle)]">
+                  {getCategoryIcon(asset.category)}
+                </div>
+                <div>
+                  <span className="font-bold text-[var(--foreground)] text-sm block">{asset.assetName}</span>
+                  <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-mono font-semibold">
+                    {asset.assetId}
+                  </span>
+                </div>
+              </div>
+
+              <Badge variant={asset.status === "assigned" ? "purple" : "success"} size="xs">
+                {asset.status === "assigned" ? "Assigned" : "Available"}
+              </Badge>
+            </div>
+
+            <div className="p-3 rounded-xl bg-[var(--secondary)] border border-[var(--border-subtle)] space-y-1 font-mono">
+              <div className="flex justify-between">
+                <span className="text-[var(--foreground-muted)]">Serial:</span>
+                <span className="text-[var(--foreground)]">{asset.serialNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--foreground-muted)]">Assigned To:</span>
+                <span className="font-bold text-[var(--foreground)] font-sans">
+                  {asset.employeeName || "Unassigned"}
+                </span>
+              </div>
+            </div>
+
+            {isAdmin && (
+              <div className="flex justify-end pt-1">
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => deleteAsset(asset.id)}
+                  className="text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Provision Asset Modal */}
+      <Dialog isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Provision Hardware Asset">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Asset Name & Model</label>
-            <Input placeholder="e.g. Apple MacBook Pro 16 M3 Max" value={assetName} onChange={(e) => setAssetName(e.target.value)} required />
+            <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+              Asset Model Name
+            </label>
+            <Input
+              value={assetName}
+              onChange={(e) => setAssetName(e.target.value)}
+              placeholder="e.g. MacBook Pro M3 Max 16-inch (64GB)"
+              required
+            />
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Category</label>
+              <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                Category
+              </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
-                className="w-full h-10 px-3 rounded-xl border border-slate-700 bg-slate-900 text-xs text-white"
+                className="h-10 w-full px-3.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
               >
-                <option value="Laptop">Laptop</option>
-                <option value="Monitor">Monitor</option>
-                <option value="Phone">Phone</option>
-                <option value="Access Card">Access Card</option>
-                <option value="Peripheral">Peripheral</option>
+                <option value="Laptop">Laptop / Notebook</option>
+                <option value="Monitor">External Monitor</option>
+                <option value="Phone">Corporate Mobile</option>
+                <option value="Accessory">Accessory / Peripherals</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Serial Number</label>
-              <Input placeholder="SN-991823" value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} required />
+              <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                Serial Number
+              </label>
+              <Input
+                value={serialNumber}
+                onChange={(e) => setSerialNumber(e.target.value)}
+                placeholder="e.g. C02G12ABMD6T"
+                required
+              />
             </div>
           </div>
+
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Assign to Employee</label>
+            <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+              Assign to Team Member
+            </label>
             <select
               value={selectedEmpId}
               onChange={(e) => setSelectedEmpId(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-700 bg-slate-900 text-xs text-white"
+              className="h-10 w-full px-3.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
             >
-              {employees.map((e) => (
-                <option key={e.employeeId} value={e.employeeId}>
-                  {e.name} ({e.employeeId})
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.employeeId}>
+                  {emp.name} ({emp.department})
                 </option>
               ))}
             </select>
           </div>
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="primary" size="sm">Register</Button>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
+            <Button variant="secondary" size="sm" type="button" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" type="submit">
+              Provision Asset →
+            </Button>
           </div>
         </form>
       </Dialog>

@@ -1,16 +1,17 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 
 export interface DialogProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title?: string;
   description?: string;
   children: React.ReactNode;
-  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "full";
+  className?: string;
 }
 
 export function Dialog({
@@ -20,16 +21,15 @@ export function Dialog({
   description,
   children,
   maxWidth = "lg",
+  className,
 }: DialogProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) onClose();
+      if (e.key === "Escape") onClose();
     };
     if (isOpen) {
       document.body.style.overflow = "hidden";
       window.addEventListener("keydown", handleKeyDown);
-    } else {
-      document.body.style.overflow = "unset";
     }
     return () => {
       document.body.style.overflow = "unset";
@@ -39,7 +39,7 @@ export function Dialog({
 
   if (!isOpen) return null;
 
-  const maxWidthClasses = {
+  const maxWidthStyles = {
     sm: "max-w-sm",
     md: "max-w-md",
     lg: "max-w-lg",
@@ -47,37 +47,52 @@ export function Dialog({
     "2xl": "max-w-2xl",
     "3xl": "max-w-3xl",
     "4xl": "max-w-4xl",
+    "5xl": "max-w-5xl",
+    full: "max-w-[95vw]",
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-fade-in">
+      {/* Deep Frosted Backdrop */}
       <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-xl transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal Dialog */}
+      {/* Modal Surface */}
       <div
         className={cn(
-          "relative w-full rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl text-slate-100 p-6 sm:p-7 z-10 animate-in zoom-in-95 duration-200",
-          maxWidthClasses[maxWidth]
+          "relative w-full rounded-2xl sm:rounded-3xl border border-[var(--border)] bg-[var(--popover)] p-6 sm:p-7 shadow-[var(--shadow-modal)] z-10 my-auto text-[var(--foreground)] transition-all transform duration-200",
+          maxWidthStyles[maxWidth],
+          className
         )}
       >
-        <div className="flex items-start justify-between pb-4 border-b border-slate-800">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-white">{title}</h2>
-            {description && <p className="text-sm text-slate-400 mt-1">{description}</p>}
+        {/* Header */}
+        {(title || description) && (
+          <div className="flex items-start justify-between gap-4 pb-4 border-b border-[var(--border)] mb-5">
+            <div className="space-y-1">
+              {title && (
+                <h3 className="text-lg sm:text-xl font-bold tracking-tight text-[var(--foreground)]">
+                  {title}
+                </h3>
+              )}
+              {description && (
+                <p className="text-xs sm:text-sm text-[var(--foreground-muted)] font-normal">
+                  {description}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="h-8 w-8 rounded-xl bg-[var(--secondary)] hover:bg-[var(--secondary-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] flex items-center justify-center transition-colors border border-[var(--border-subtle)] shrink-0 cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+        )}
 
-        <div className="mt-5">{children}</div>
+        {/* Content */}
+        <div>{children}</div>
       </div>
     </div>
   );

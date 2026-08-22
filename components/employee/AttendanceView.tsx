@@ -11,13 +11,14 @@ import {
   TrendingUp,
   FileEdit,
   Plus,
+  Plane,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Input, Textarea } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { AttendanceRecord, AttendanceStatus } from "@/types";
 import { LivePunchCard } from "@/components/common/LivePunchCard";
 
@@ -78,7 +79,7 @@ export function AttendanceView() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `HRFlowX_Timesheet_${currentEmployee?.employeeId || "emp"}_${selectedMonth}.csv`);
+    link.setAttribute("download", `HRFlowX_Attendance_${selectedMonth}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -86,267 +87,293 @@ export function AttendanceView() {
 
   const handleCorrectionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!reqReason.trim()) return;
+
     raiseAttendanceCorrectionRequest({
       date: reqDate,
       requestedCheckIn: reqIn,
       requestedCheckOut: reqOut,
       reason: reqReason,
     });
+
     setIsCorrectionModalOpen(false);
     setReqReason("");
   };
 
-  // Status Badge Helper
-  const getStatusBadge = (status: AttendanceStatus) => {
-    switch (status) {
-      case "present":
-        return <Badge variant="success">Present</Badge>;
-      case "late":
-        return <Badge variant="amber">Late</Badge>;
-      case "half_day":
-        return <Badge variant="purple">Half Day</Badge>;
-      case "on_leave":
-        return <Badge variant="blue">On Leave</Badge>;
-      case "absent":
-        return <Badge variant="destructive">Absent</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Top Banner */}
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Clock className="h-6 w-6 text-indigo-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)] flex items-center gap-2.5">
+            <Clock className="h-6 w-6 text-indigo-500" />
             Biometric Attendance & Timesheets
           </h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Track daily work hours, biometric punches, on-time punctuality, and request timesheet adjustments.
+          <p className="text-xs sm:text-sm text-[var(--foreground-muted)] mt-0.5">
+            Verify real-time check-in logs, punctuality metrics, and attendance corrections.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsCorrectionModalOpen(true)}
-            className="gap-1.5 text-xs font-semibold"
-          >
-            <FileEdit className="h-3.5 w-3.5" /> Request Correction
-          </Button>
-
+        <div className="flex flex-wrap items-center gap-2.5">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportCSV}
-            className="gap-1.5 text-xs font-semibold"
+            className="gap-1.5 font-semibold text-xs"
           >
-            <Download className="h-3.5 w-3.5" /> Export (.CSV)
+            <Download className="h-4 w-4" />
+            Export Timesheet CSV
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsCorrectionModalOpen(true)}
+            className="gap-1.5 font-semibold text-xs shadow-sm"
+          >
+            <FileEdit className="h-4 w-4" />
+            Correction Request
           </Button>
         </div>
       </div>
 
-      {/* Live Punch Card Widget */}
-      <LivePunchCard />
-
-      {/* Metrics Row */}
+      {/* KPI Stats Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-4 bg-slate-900/80 border-slate-800">
-          <span className="text-xs text-slate-400 font-medium">On-Time Accuracy</span>
-          <p className="text-2xl font-extrabold text-emerald-400 mt-1">{onTimePercentage}%</p>
-          <span className="text-[10px] text-slate-500 mt-1 block">Punctuality Score</span>
-        </Card>
-
-        <Card className="p-4 bg-slate-900/80 border-slate-800">
-          <span className="text-xs text-slate-400 font-medium">Present Days</span>
-          <p className="text-2xl font-extrabold text-white mt-1">{presentDays}</p>
-          <span className="text-[10px] text-emerald-400 mt-1 block">Full Shifts Logged</span>
-        </Card>
-
-        <Card className="p-4 bg-slate-900/80 border-slate-800">
-          <span className="text-xs text-slate-400 font-medium">Late Arrivals</span>
-          <p className="text-2xl font-extrabold text-amber-400 mt-1">{lateDays}</p>
-          <span className="text-[10px] text-amber-400/80 mt-1 block">Grace period applies</span>
-        </Card>
-
-        <Card className="p-4 bg-slate-900/80 border-slate-800">
-          <span className="text-xs text-slate-400 font-medium">Approved Leaves</span>
-          <p className="text-2xl font-extrabold text-indigo-400 mt-1">{leaveDays}</p>
-          <span className="text-[10px] text-indigo-400/80 mt-1 block">Vacation & Sick</span>
-        </Card>
+        <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-[var(--shadow-card)]">
+          <span className="text-[11px] font-semibold text-[var(--foreground-muted)] uppercase block">
+            Present Days
+          </span>
+          <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
+            {presentDays} Days
+          </span>
+        </div>
+        <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-[var(--shadow-card)]">
+          <span className="text-[11px] font-semibold text-[var(--foreground-muted)] uppercase block">
+            On-Time Velocity
+          </span>
+          <span className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 font-mono mt-1 block">
+            {onTimePercentage}%
+          </span>
+        </div>
+        <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-[var(--shadow-card)]">
+          <span className="text-[11px] font-semibold text-[var(--foreground-muted)] uppercase block">
+            Late / Half Days
+          </span>
+          <span className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 font-mono mt-1 block">
+            {lateDays + halfDays}
+          </span>
+        </div>
+        <div className="p-4 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-[var(--shadow-card)]">
+          <span className="text-[11px] font-semibold text-[var(--foreground-muted)] uppercase block">
+            Approved Leaves
+          </span>
+          <span className="text-2xl font-extrabold text-purple-600 dark:text-purple-400 font-mono mt-1 block">
+            {leaveDays} Days
+          </span>
+        </div>
       </div>
 
-      {/* Interactive Monthly Attendance Calendar */}
-      <Card className="p-5">
-        <CardHeader className="p-0 pb-4 border-b border-slate-800 flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-base flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-indigo-400" />
-              Interactive Attendance Calendar (August 2026)
-            </CardTitle>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Green = Present, Red = Absent, Purple = Half Day, Blue = On Leave, Orange = Late
-            </p>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0 pt-4">
-          <div className="grid grid-cols-7 gap-2 text-center text-xs">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="font-bold text-slate-500 py-1">
-                {day}
-              </div>
-            ))}
-            {/* Days Matrix for Aug 2026 */}
-            {Array.from({ length: 31 }, (_, i) => {
-              const dayNum = i + 1;
-              const dateStr = `2026-08-${String(dayNum).padStart(2, "0")}`;
-              const rec = myRecords.find((r) => r.date === dateStr);
+      {/* Main Grid: Calendar & Daily Table */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Live Punch & Correction History */}
+        <div className="lg:col-span-4 space-y-6">
+          <LivePunchCard />
 
-              let bg = "bg-slate-900/40 border-slate-800/60 text-slate-500";
-              let label = "Off";
+          {/* Correction Requests Card */}
+          <Card>
+            <CardHeader className="pb-3 border-b border-[var(--border)]">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FileEdit className="h-4 w-4 text-purple-500" />
+                My Correction Requests
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-3">
+              {myRequests.length > 0 ? (
+                myRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    className="p-3.5 rounded-2xl bg-[var(--secondary)] border border-[var(--border-subtle)] space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono font-bold text-[var(--foreground)]">
+                        {req.date}
+                      </span>
+                      <Badge
+                        variant={
+                          req.status === "approved"
+                            ? "success"
+                            : req.status === "pending"
+                            ? "warning"
+                            : "destructive"
+                        }
+                        size="xs"
+                      >
+                        {req.status}
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-[var(--foreground-muted)]">
+                      Requested: {req.requestedCheckIn} – {req.requestedCheckOut}
+                    </p>
+                    <p className="text-[10px] text-[var(--foreground-subtle)] italic">
+                      "{req.reason}"
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-[var(--foreground-subtle)] text-center py-4">
+                  No attendance correction requests raised.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-              if (rec) {
-                if (rec.status === "present") {
-                  bg = "bg-emerald-500/20 border-emerald-500/40 text-emerald-300";
-                  label = "Present";
-                } else if (rec.status === "late") {
-                  bg = "bg-amber-500/20 border-amber-500/40 text-amber-300";
-                  label = "Late";
-                } else if (rec.status === "half_day") {
-                  bg = "bg-purple-500/20 border-purple-500/40 text-purple-300";
-                  label = "Half Day";
-                } else if (rec.status === "on_leave") {
-                  bg = "bg-blue-500/20 border-blue-500/40 text-blue-300";
-                  label = "On Leave";
-                } else if (rec.status === "absent") {
-                  bg = "bg-rose-500/20 border-rose-500/40 text-rose-300";
-                  label = "Absent";
-                }
-              }
+        {/* Right Column: Attendance Records Table */}
+        <div className="lg:col-span-8 space-y-6">
+          <Card>
+            <CardHeader className="pb-3 border-b border-[var(--border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-indigo-500" />
+                Monthly Attendance Log ({filteredRecords.length} Records)
+              </CardTitle>
 
-              return (
-                <div
-                  key={dayNum}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center justify-between min-h-[60px] transition-all hover:scale-105 ${bg}`}
+              <div className="flex items-center gap-2">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="h-8.5 px-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
                 >
-                  <span className="font-bold text-xs">{dayNum}</span>
-                  <span className="text-[10px] font-medium mt-1 truncate">{label}</span>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Attendance History Table */}
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-          <div>
-            <CardTitle className="text-base">Logged Timesheet Logs</CardTitle>
-            <p className="text-xs text-slate-400">Timestamp records recorded by biometric auth</p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 px-3 rounded-xl border border-slate-700 bg-slate-900 text-xs text-slate-200"
-            >
-              <option value="all">All Statuses</option>
-              <option value="present">Present</option>
-              <option value="late">Late</option>
-              <option value="half_day">Half Day</option>
-              <option value="on_leave">On Leave</option>
-              <option value="absent">Absent</option>
-            </select>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-800 bg-slate-900/90 text-slate-400 font-semibold uppercase tracking-wider">
-                <tr>
-                  <th className="px-5 py-3.5">Date</th>
-                  <th className="px-5 py-3.5">Check In</th>
-                  <th className="px-5 py-3.5">Check Out</th>
-                  <th className="px-5 py-3.5">Status</th>
-                  <th className="px-5 py-3.5">Total Hours</th>
-                  <th className="px-5 py-3.5">Location</th>
-                  <th className="px-5 py-3.5">Notes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                {filteredRecords.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-500">
-                      No attendance records found for this period.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredRecords.map((r) => (
-                    <tr key={r.id} className="hover:bg-slate-800/40">
-                      <td className="px-5 py-3.5 font-medium text-white whitespace-nowrap">{r.date}</td>
-                      <td className="px-5 py-3.5 font-mono text-emerald-400 whitespace-nowrap">{r.checkIn || "--:--"}</td>
-                      <td className="px-5 py-3.5 font-mono text-slate-300 whitespace-nowrap">{r.checkOut || "--:--"}</td>
-                      <td className="px-5 py-3.5 whitespace-nowrap">{getStatusBadge(r.status)}</td>
-                      <td className="px-5 py-3.5 font-mono text-white whitespace-nowrap">{r.workingHours || "--"}</td>
-                      <td className="px-5 py-3.5 text-slate-400 whitespace-nowrap">{r.location || "Office"}</td>
-                      <td className="px-5 py-3.5 text-slate-400 max-w-xs truncate">{r.notes || "-"}</td>
+                  <option value="all">All Status</option>
+                  <option value="present">Present</option>
+                  <option value="late">Late</option>
+                  <option value="half_day">Half Day</option>
+                  <option value="on_leave">On Leave</option>
+                  <option value="absent">Absent</option>
+                </select>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-[var(--border)] bg-[var(--background-subtle)] text-[var(--foreground-muted)] font-semibold uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Check In</th>
+                      <th className="px-4 py-3">Check Out</th>
+                      <th className="px-4 py-3">Duration</th>
+                      <th className="px-4 py-3">Status</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border-subtle)] font-mono">
+                    {filteredRecords.map((r) => (
+                      <tr key={r.id} className="hover:bg-[var(--secondary)] transition-colors">
+                        <td className="px-4 py-3 font-semibold text-[var(--foreground)]">
+                          {r.date}
+                        </td>
+                        <td className="px-4 py-3 text-emerald-600 dark:text-emerald-400">
+                          {r.checkIn || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-indigo-600 dark:text-indigo-400">
+                          {r.checkOut || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-[var(--foreground-muted)]">
+                          {r.workingHours || "0h 0m"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge
+                            variant={
+                              r.status === "present"
+                                ? "success"
+                                : r.status === "late"
+                                ? "warning"
+                                : r.status === "on_leave"
+                                ? "purple"
+                                : "neutral"
+                            }
+                            size="xs"
+                            dot
+                          >
+                            {r.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Attendance Correction Modal */}
       <Dialog
         isOpen={isCorrectionModalOpen}
         onClose={() => setIsCorrectionModalOpen(false)}
-        title="Request Timesheet Correction"
-        description="Submit a punch adjustment request to HR with the reason for missing punch."
-        maxWidth="md"
+        title="Request Attendance Correction"
+        description="Submit punch adjustment for HR review and retroactive update."
       >
         <form onSubmit={handleCorrectionSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Date</label>
-            <Input type="date" value={reqDate} onChange={(e) => setReqDate(e.target.value)} required />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Check In Time</label>
-              <Input placeholder="09:00 AM" value={reqIn} onChange={(e) => setReqIn(e.target.value)} required />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Check Out Time</label>
-              <Input placeholder="06:00 PM" value={reqOut} onChange={(e) => setReqOut(e.target.value)} required />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Reason for Adjustment</label>
-            <Textarea
-              placeholder="e.g. Forgot to clock out due to offsite client deployment..."
-              value={reqReason}
-              onChange={(e) => setReqReason(e.target.value)}
-              rows={3}
+            <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+              Date for Adjustment
+            </label>
+            <Input
+              type="date"
+              value={reqDate}
+              onChange={(e) => setReqDate(e.target.value)}
               required
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsCorrectionModalOpen(false)}>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                Requested Check-In
+              </label>
+              <Input
+                value={reqIn}
+                onChange={(e) => setReqIn(e.target.value)}
+                placeholder="09:00 AM"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                Requested Check-Out
+              </label>
+              <Input
+                value={reqOut}
+                onChange={(e) => setReqOut(e.target.value)}
+                placeholder="06:00 PM"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+              Reason for Adjustment
+            </label>
+            <textarea
+              value={reqReason}
+              onChange={(e) => setReqReason(e.target.value)}
+              placeholder="e.g. Forgot to punch out due to late sprint deployment sync..."
+              className="w-full h-24 p-3 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
+            <Button
+              variant="secondary"
+              size="sm"
+              type="button"
+              onClick={() => setIsCorrectionModalOpen(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm">
-              Submit Request
+            <Button variant="primary" size="sm" type="submit">
+              Submit Correction →
             </Button>
           </div>
         </form>

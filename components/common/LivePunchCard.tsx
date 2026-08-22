@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Clock, CheckCircle2, LogOut, MapPin, Coffee, Sparkles } from "lucide-react";
+import { Clock, CheckCircle2, LogOut, MapPin, Coffee, Sparkles, Building, Laptop } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/store";
@@ -36,7 +36,6 @@ export function LivePunchCard() {
       );
 
       if (isPunchedIn && todayAttendance?.checkIn) {
-        // Calculate seconds elapsed from checkIn time today
         try {
           const [timePart, modifier] = todayAttendance.checkIn.split(" ");
           let [hours, minutes] = timePart.split(":").map(Number);
@@ -66,7 +65,6 @@ export function LivePunchCard() {
   }, [isPunchedIn, todayAttendance]);
 
   const handlePunchIn = () => {
-    // Fire confetti celebration
     try {
       confetti({
         particleCount: 80,
@@ -74,9 +72,7 @@ export function LivePunchCard() {
         origin: { y: 0.6 },
         colors: ["#6366f1", "#10b981", "#38bdf8", "#ec4899"],
       });
-    } catch {
-      // ignore
-    }
+    } catch {}
     punchIn(location);
   };
 
@@ -85,118 +81,96 @@ export function LivePunchCard() {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900/90 to-indigo-950/40 p-6 shadow-xl backdrop-blur-md">
-      {/* Background ambient lighting */}
-      <div className="absolute -right-12 -top-12 h-44 w-44 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute -left-12 -bottom-12 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+    <div className="relative overflow-hidden rounded-3xl border border-[var(--card-border)] bg-[var(--card)] p-6 sm:p-7 shadow-[var(--shadow-card)] space-y-6 glass-card">
+      {/* Top Header: Live Status & Location Pill */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+              isPunchedIn ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
+            }`}
+          />
+          <span className="text-xs font-bold uppercase tracking-wider text-[var(--foreground)]">
+            {isPunchedIn ? "Active Shift In Progress" : "Shift Offline"}
+          </span>
+        </div>
 
-      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        {/* Left info */}
+        {/* Location selector */}
+        <div className="flex items-center rounded-xl bg-[var(--secondary)] border border-[var(--border-subtle)] p-0.5 text-[11px] font-semibold">
+          <button
+            onClick={() => setLocation("Office")}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              location === "Office"
+                ? "bg-[var(--card)] text-[var(--foreground)] shadow-2xs font-bold"
+                : "text-[var(--foreground-muted)]"
+            }`}
+          >
+            <Building className="h-3 w-3" /> Office
+          </button>
+          <button
+            onClick={() => setLocation("Remote")}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              location === "Remote"
+                ? "bg-[var(--card)] text-[var(--foreground)] shadow-2xs font-bold"
+                : "text-[var(--foreground-muted)]"
+            }`}
+          >
+            <Laptop className="h-3 w-3" /> Remote
+          </button>
+        </div>
+      </div>
+
+      {/* Clock Display */}
+      <div className="text-center space-y-1.5 py-2">
+        <div className="text-3xl sm:text-4xl font-extrabold tracking-tight font-mono text-[var(--foreground)]">
+          {currentTime || "09:00:00 AM"}
+        </div>
+        <p className="text-xs text-[var(--foreground-muted)] font-medium">{currentDate}</p>
+      </div>
+
+      {/* Timer / Shift Info Strip */}
+      <div className="p-4 rounded-2xl bg-[var(--secondary)] border border-[var(--border-subtle)] flex items-center justify-between text-xs font-mono">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-              Live Attendance Punch Engine
-            </p>
-          </div>
-
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">
-            {currentTime || "--:--:--"}
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">{currentDate}</p>
-
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            {isPunchedIn ? (
-              <Badge variant="success" size="md" className="gap-1.5 px-3 py-1 font-semibold">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Punched In at {todayAttendance?.checkIn}
-              </Badge>
-            ) : todayAttendance?.checkOut ? (
-              <Badge variant="default" size="md" className="gap-1.5 px-3 py-1">
-                <LogOut className="h-3.5 w-3.5 text-amber-400" />
-                Shift Ended at {todayAttendance.checkOut}
-              </Badge>
-            ) : (
-              <Badge variant="warning" size="md" className="gap-1.5 px-3 py-1">
-                <Clock className="h-3.5 w-3.5" />
-                Not Checked In Yet
-              </Badge>
-            )}
-
-            {isPunchedIn && (
-              <div className="flex items-center gap-1.5 rounded-lg bg-slate-800/80 px-3 py-1 border border-slate-700/60 text-xs font-mono text-emerald-400 font-semibold shadow-inner">
-                <Clock className="h-3.5 w-3.5 text-emerald-400" />
-                Working: {elapsedTime}
-              </div>
-            )}
-          </div>
+          <span className="text-[10px] text-[var(--foreground-subtle)] uppercase block font-sans">
+            Shift Punch-In
+          </span>
+          <span className="font-bold text-[var(--foreground)]">
+            {isPunchedIn && todayAttendance?.checkIn ? todayAttendance.checkIn : "Not Punched"}
+          </span>
         </div>
-
-        {/* Right action buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          {!isPunchedIn ? (
-            <div className="flex flex-col sm:flex-row items-stretch gap-2.5">
-              {/* Location toggle */}
-              <div className="flex items-center rounded-xl bg-slate-800/80 border border-slate-700/80 p-1">
-                <button
-                  type="button"
-                  onClick={() => setLocation("Office")}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    location === "Office"
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  <MapPin className="h-3 w-3" />
-                  Office
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLocation("Remote")}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    location === "Remote"
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  Remote
-                </button>
-              </div>
-
-              <Button
-                variant="emerald"
-                size="lg"
-                onClick={handlePunchIn}
-                className="gap-2 shadow-emerald-500/20 font-semibold"
-              >
-                <Sparkles className="h-4 w-4 animate-bounce" />
-                PUNCH IN NOW
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2.5">
-              <Button
-                variant={isOnBreak ? "warning" : "secondary"}
-                size="md"
-                onClick={() => setIsOnBreak(!isOnBreak)}
-                className="gap-1.5"
-              >
-                <Coffee className="h-4 w-4" />
-                {isOnBreak ? "Resume Work" : "Take Break"}
-              </Button>
-
-              <Button
-                variant="destructive"
-                size="md"
-                onClick={handlePunchOut}
-                className="gap-2 font-semibold"
-              >
-                <LogOut className="h-4 w-4" />
-                PUNCH OUT
-              </Button>
-            </div>
-          )}
+        <div className="text-right">
+          <span className="text-[10px] text-[var(--foreground-subtle)] uppercase block font-sans">
+            Elapsed Duration
+          </span>
+          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+            {isPunchedIn ? elapsedTime : "00h 00m 00s"}
+          </span>
         </div>
+      </div>
+
+      {/* Primary Action Button */}
+      <div>
+        {isPunchedIn ? (
+          <Button
+            variant="destructive"
+            size="lg"
+            onClick={handlePunchOut}
+            className="w-full font-bold shadow-md gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Check Out of Shift
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handlePunchIn}
+            className="w-full font-bold shadow-md gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            Punch IN ({location}) →
+          </Button>
+        )}
       </div>
     </div>
   );

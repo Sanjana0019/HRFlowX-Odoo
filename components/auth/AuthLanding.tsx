@@ -15,6 +15,10 @@ import {
   Upload,
   CheckCircle2,
   Key,
+  Users,
+  Clock,
+  CreditCard,
+  Zap,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -86,10 +90,10 @@ export function AuthLanding() {
       });
 
       if (!success && !authError) {
-        setErrorMsg("Failed to create space. Please verify email and credentials.");
+        setErrorMsg("Failed to create workspace. Please verify email and credentials.");
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || "Failed to register space. Please try again.");
+      setErrorMsg(err?.message || "Failed to register workspace. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -129,19 +133,19 @@ export function AuthLanding() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen w-full bg-[var(--background)] text-[var(--foreground)] flex flex-col justify-between selection:bg-indigo-500 selection:text-white transition-colors">
       {/* Top Brand Bar */}
-      <header className="flex h-20 items-center justify-between px-6 sm:px-12 border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-xl">
+      <header className="flex h-20 items-center justify-between px-6 sm:px-12 border-b border-[var(--border)] glass-navbar">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 shadow-lg shadow-indigo-500/25">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 shadow-md shadow-indigo-500/20">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-lg font-black tracking-tight text-white">HRFlowX</span>
-              <Badge variant="purple" size="sm">Enterprise</Badge>
+              <span className="text-lg font-black tracking-tight text-[var(--foreground)]">HRFlowX</span>
+              <Badge variant="purple" size="xs">Enterprise SaaS</Badge>
             </div>
-            <span className="text-[11px] text-slate-400 font-medium">Human Resource Management System</span>
+            <span className="text-[11px] text-[var(--foreground-subtle)] font-medium">Human Resource Management System</span>
           </div>
         </div>
 
@@ -150,7 +154,7 @@ export function AuthLanding() {
             variant="ghost"
             size="sm"
             onClick={() => handleOneClickLogin("employee")}
-            className="text-xs font-semibold text-indigo-400 hover:text-white hidden sm:flex"
+            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hidden sm:flex"
           >
             ⚡ Demo Employee
           </Button>
@@ -158,7 +162,7 @@ export function AuthLanding() {
             variant="outline"
             size="sm"
             onClick={() => handleOneClickLogin("admin")}
-            className="text-xs font-semibold text-purple-400 hover:text-white border-purple-500/30 bg-purple-500/10"
+            className="text-xs font-semibold text-purple-600 dark:text-purple-400 border-purple-500/30 bg-purple-500/10"
           >
             ⚡ Demo Admin
           </Button>
@@ -166,217 +170,261 @@ export function AuthLanding() {
       </header>
 
       {/* Hero & Authentication Card */}
-      <main className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <main className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           {/* Left: Product Manifesto */}
           <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
               <Sparkles className="h-3.5 w-3.5" /> Streamline People, Power Performance.
             </div>
 
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[var(--foreground)] leading-tight">
               The Modern OS for{" "}
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
-                High-Performance
+              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+                High-Velocity
               </span>{" "}
               Workforces.
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-400 max-w-md mx-auto lg:mx-0 leading-relaxed">
-              Biometric timesheets, dynamic salary formulas, leave quota recalculations, and SOC2-ready governance in one unified platform.
+            <p className="text-sm sm:text-base text-[var(--foreground-muted)] max-w-lg leading-relaxed mx-auto lg:mx-0">
+              Automate biometric timesheets, multi-branch governance, dynamic salary recalculation, and employee self-service with SOC2-grade compliance.
             </p>
 
-            {/* Feature Pills */}
-            <div className="grid grid-cols-2 gap-3 pt-2 text-xs font-medium text-slate-300 text-left max-w-md mx-auto lg:mx-0">
-              <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-2.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                <span>Auto ID Generation</span>
+            {/* Feature Badges */}
+            <div className="grid grid-cols-2 gap-3 pt-2 max-w-md mx-auto lg:mx-0 text-left">
+              <div className="p-3 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs flex items-center gap-2.5">
+                <Clock className="h-4 w-4 text-indigo-500 shrink-0" />
+                <span className="text-xs font-semibold text-[var(--foreground)]">Live Punch Clock</span>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-2.5">
-                <CheckCircle2 className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                <span>Dynamic Wage Engine</span>
+              <div className="p-3 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs flex items-center gap-2.5">
+                <CreditCard className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span className="text-xs font-semibold text-[var(--foreground)]">Dynamic Wage Math</span>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-2.5">
-                <CheckCircle2 className="h-4 w-4 text-purple-400 flex-shrink-0" />
-                <span>Punch Systray Engine</span>
+              <div className="p-3 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs flex items-center gap-2.5">
+                <Users className="h-4 w-4 text-purple-500 shrink-0" />
+                <span className="text-xs font-semibold text-[var(--foreground)]">Kanban Directory</span>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-2.5">
-                <CheckCircle2 className="h-4 w-4 text-pink-400 flex-shrink-0" />
-                <span>Encrypted Vault</span>
+              <div className="p-3 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs flex items-center gap-2.5">
+                <Shield className="h-4 w-4 text-amber-500 shrink-0" />
+                <span className="text-xs font-semibold text-[var(--foreground)]">SOC2 Audit Stream</span>
               </div>
             </div>
           </div>
 
-          {/* Right: Auth Form Container Matching Wireframe 3 */}
-          <div className="lg:col-span-6">
-            <div className="rounded-3xl border border-slate-800 bg-slate-900/90 shadow-2xl backdrop-blur-2xl p-6 sm:p-8 space-y-6">
-              {/* Form Mode Switcher */}
-              <div className="flex items-center rounded-2xl bg-slate-950 p-1 border border-slate-800">
+          {/* Right: Interactive Glass Auth Form Card */}
+          <div className="lg:col-span-6 w-full max-w-md mx-auto">
+            <div className="rounded-3xl glass-card p-6 sm:p-8 shadow-[var(--shadow-modal)] border border-[var(--border)] space-y-6">
+              {/* Segmented Mode Switcher */}
+              <div className="flex p-1 rounded-2xl bg-[var(--secondary)] border border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setMode("signin")}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                     mode === "signin"
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+                      : "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
                   }`}
                 >
-                  Sign In
+                  Sign In to Workspace
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode("signup")}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                     mode === "signup"
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+                      : "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
                   }`}
                 >
                   Create Company Space
                 </button>
               </div>
 
+              {/* 1-Click Instant Demo Login Strip */}
+              <div className="p-3.5 rounded-2xl bg-indigo-500/5 border border-indigo-500/15 space-y-2">
+                <div className="flex items-center justify-between text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                  <span className="flex items-center gap-1.5">
+                    <Zap className="h-3.5 w-3.5" /> Instant 1-Click Evaluator Logins:
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOneClickLogin("employee")}
+                    className="p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] hover:border-indigo-500/40 text-xs text-[var(--foreground)] font-semibold transition-all text-left shadow-2xs cursor-pointer active:scale-[0.98]"
+                  >
+                    <span className="text-[var(--foreground)] block font-bold">Arjun Sharma</span>
+                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-mono">HXAS20230001</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOneClickLogin("admin")}
+                    className="p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] hover:border-purple-500/40 text-xs text-[var(--foreground)] font-semibold transition-all text-left shadow-2xs cursor-pointer active:scale-[0.98]"
+                  >
+                    <span className="text-[var(--foreground)] block font-bold">Priya Mehta</span>
+                    <span className="text-[10px] text-purple-600 dark:text-purple-400 font-mono">HXPM20220001</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Error Alert */}
               {(errorMsg || authError) && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400 font-medium">
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-xs text-rose-600 dark:text-rose-400 font-medium">
                   {errorMsg || authError}
                 </div>
               )}
 
-              {/* MODE 1: SIGN IN MATCHING WIREFRAME 3 */}
+              {/* Sign In Form */}
               {mode === "signin" ? (
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--foreground-muted)] mb-1.5">
                       Login ID or Work Email
                     </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        type="text"
-                        placeholder="e.g. HXAR20230001 or employee@hrflowx.io"
-                        value={loginIdentifier}
-                        onChange={(e) => setLoginIdentifier(e.target.value)}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
+                    <Input
+                      type="text"
+                      value={loginIdentifier}
+                      onChange={(e) => setLoginIdentifier(e.target.value)}
+                      placeholder="HXAS20230001 or employee@hrflowx.io"
+                      leftIcon={<Mail className="h-4 w-4" />}
+                      required
+                    />
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--foreground-muted)]">
                         Password
                       </label>
                       <button
                         type="button"
                         onClick={() => {
+                          setResetEmail(loginIdentifier);
                           setIsResetModalOpen(true);
-                          setResetEmail(loginIdentifier.includes("@") ? loginIdentifier : "");
-                          setResetFeedback(null);
                         }}
-                        className="text-[11px] text-indigo-400 hover:underline cursor-pointer"
+                        className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                       >
                         Forgot password?
                       </button>
                     </div>
                     <div className="relative">
-                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="••••••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10"
+                        placeholder="••••••••••••"
+                        leftIcon={<Lock className="h-4 w-4" />}
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--foreground-subtle)] hover:text-[var(--foreground)]"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
 
-                  <Button type="submit" variant="primary" size="lg" disabled={isSubmitting} className="w-full font-bold shadow-indigo-600/30">
-                    {isSubmitting ? "AUTHENTICATING..." : "SIGN IN →"}
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    isLoading={isSubmitting}
+                    className="w-full font-bold shadow-md"
+                  >
+                    Enter Workspace →
                   </Button>
-
-                  {/* 1-Click Demo Buttons */}
-                  <div className="pt-3 border-t border-slate-800/80">
-                    <p className="text-[11px] text-center text-slate-400 mb-2 font-medium">
-                      Instant 1-Click Interactive Logins:
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        disabled={isSubmitting}
-                        onClick={() => handleOneClickLogin("employee")}
-                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/40 text-xs text-slate-300 font-semibold transition-all text-left disabled:opacity-50"
-                      >
-                        <span className="text-white block font-bold">Arjun Sharma</span>
-                        <span className="text-[10px] text-indigo-400 font-mono">HXAS20230001</span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isSubmitting}
-                        onClick={() => handleOneClickLogin("admin")}
-                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-purple-500/40 text-xs text-slate-300 font-semibold transition-all text-left disabled:opacity-50"
-                      >
-                        <span className="text-white block font-bold">Priya Mehta</span>
-                        <span className="text-[10px] text-purple-400 font-mono">HXPM20220001</span>
-                      </button>
-                    </div>
-                  </div>
                 </form>
               ) : (
-                /* MODE 2: SIGN UP MATCHING WIREFRAME 3 */
-                <form onSubmit={handleSignUp} className="space-y-3.5 text-xs">
-                  <div>
-                    <label className="block font-semibold uppercase text-slate-400 mb-1">Company Name</label>
-                    <Input placeholder="e.g. Acme Corporation" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
+                /* Sign Up Form */
+                <form onSubmit={handleSignUp} className="space-y-3.5">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                        Company Name
+                      </label>
+                      <Input
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="e.g. Acme Corp"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                        Full Name
+                      </label>
+                      <Input
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="e.g. Alex Rivera"
+                        required
+                      />
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block font-semibold uppercase text-slate-400 mb-1">Full Name</label>
-                    <Input placeholder="Sarah Connor" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                    <label className="block text-[11px] font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                      Work Email Address
+                    </label>
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="alex@company.io"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                      Phone Number
+                    </label>
+                    <Input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+1 (555) 000-0000"
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-semibold uppercase text-slate-400 mb-1">Work Email</label>
-                      <Input type="email" placeholder="sarah@acme.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                      <label className="block text-[11px] font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                        Password
+                      </label>
+                      <Input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                      />
                     </div>
                     <div>
-                      <label className="block font-semibold uppercase text-slate-400 mb-1">Phone</label>
-                      <Input placeholder="+1 555 0192" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                      <label className="block text-[11px] font-semibold uppercase text-[var(--foreground-muted)] mb-1">
+                        Confirm
+                      </label>
+                      <Input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                      />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-semibold uppercase text-slate-400 mb-1">Password</label>
-                      <Input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
-                    </div>
-                    <div>
-                      <label className="block font-semibold uppercase text-slate-400 mb-1">Confirm Password</label>
-                      <Input type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-                    </div>
-                  </div>
-
-                  <Button type="submit" variant="primary" size="lg" disabled={isSubmitting} className="w-full font-bold">
-                    {isSubmitting ? "CREATING SPACE..." : "Create Company Space →"}
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    isLoading={isSubmitting}
+                    className="w-full font-bold shadow-md"
+                  >
+                    Initialize Workspace →
                   </Button>
-
-                  {/* Explanatory note matching Wireframe 3 */}
-                  <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-                    <p className="font-semibold text-slate-300">Automatic Login ID Generation:</p>
-                    <p>Format: <span className="font-mono text-indigo-300 font-bold">[CO][NAME][YEAR][SEQ]</span></p>
-                    <p className="text-[10px] text-slate-500">
-                      Standard personnel accounts are created by HR Officers and receive auto-generated IDs and credentials.
-                    </p>
-                  </div>
                 </form>
               )}
             </div>
@@ -384,73 +432,50 @@ export function AuthLanding() {
         </div>
       </main>
 
+      {/* Footer */}
+      <footer className="py-6 border-t border-[var(--border)] text-center text-xs text-[var(--foreground-subtle)]">
+        HRFlowX • Human Resource Management System • "Streamline People, Power Performance."
+      </footer>
+
       {/* Password Reset Modal */}
       {isResetModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Key className="h-5 w-5 text-indigo-400" />
-                <h3 className="font-bold text-white text-sm">Reset Password</h3>
-              </div>
-              <button
-                onClick={() => setIsResetModalOpen(false)}
-                className="text-slate-400 hover:text-white text-sm font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-400">
-              Enter your registered work email address below to receive password recovery instructions via Supabase Auth.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in">
+          <div className="w-full max-w-md rounded-3xl glass-modal p-6 space-y-4 border border-[var(--border)]">
+            <h3 className="text-lg font-bold text-[var(--foreground)]">Reset Master Password</h3>
+            <p className="text-xs text-[var(--foreground-muted)]">
+              Enter your registered work email to receive verification credentials.
             </p>
-
             {resetFeedback && (
               <div
-                className={`p-3 rounded-xl border text-xs font-medium ${
+                className={`p-3 rounded-xl text-xs font-medium ${
                   resetFeedback.type === "success"
-                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                    : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25"
+                    : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25"
                 }`}
               >
                 {resetFeedback.msg}
               </div>
             )}
-
             <form onSubmit={handlePasswordResetSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Work Email</label>
-                <Input
-                  type="email"
-                  placeholder="employee@company.com"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  required
-                />
-              </div>
-
+              <Input
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="employee@hrflowx.io"
+                required
+              />
               <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsResetModalOpen(false)}
-                >
+                <Button variant="secondary" size="sm" type="button" onClick={() => setIsResetModalOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary" size="sm">
-                  Send Instructions →
+                <Button variant="primary" size="sm" type="submit">
+                  Send Link
                 </Button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 px-6 py-4 text-center text-xs text-slate-500">
-        HRFlowX • Human Resource Management System • "Streamline People, Power Performance."
-      </footer>
     </div>
   );
 }

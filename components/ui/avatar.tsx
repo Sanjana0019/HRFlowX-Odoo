@@ -1,25 +1,33 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export interface AvatarProps {
+export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   src?: string;
-  name: string;
+  alt?: string;
+  name?: string;
+  fallback?: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
-  className?: string;
+  status?: "online" | "offline" | "busy" | "away";
   isOnline?: boolean;
 }
 
-export function Avatar({ src, name, size = "md", className, isOnline }: AvatarProps) {
-  const [hasError, setHasError] = React.useState(false);
+export function Avatar({
+  src,
+  alt,
+  name,
+  fallback,
+  size = "md",
+  status,
+  isOnline,
+  className,
+  ...props
+}: AvatarProps) {
+  const [imageError, setImageError] = React.useState(false);
 
-  const getInitials = (n: string) => {
-    if (!n) return "DF";
-    const parts = n.trim().split(" ");
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return n.slice(0, 2).toUpperCase();
-  };
+  const displayName = alt || name || "User Avatar";
+  const effectiveStatus = status || (isOnline ? "online" : undefined);
 
-  const sizeClasses = {
+  const sizeStyles = {
     xs: "h-6 w-6 text-[10px]",
     sm: "h-8 w-8 text-xs",
     md: "h-10 w-10 text-sm",
@@ -27,42 +35,56 @@ export function Avatar({ src, name, size = "md", className, isOnline }: AvatarPr
     xl: "h-16 w-16 text-lg",
   };
 
-  const indicatorSizes = {
-    xs: "h-1.5 w-1.5",
-    sm: "h-2 w-2",
-    md: "h-2.5 w-2.5",
-    lg: "h-3 w-3",
-    xl: "h-3.5 w-3.5",
+  const statusColors = {
+    online: "bg-emerald-500 ring-[var(--card)]",
+    offline: "bg-slate-400 ring-[var(--card)]",
+    busy: "bg-rose-500 ring-[var(--card)]",
+    away: "bg-amber-500 ring-[var(--card)]",
   };
 
+  const statusSizes = {
+    xs: "h-1.5 w-1.5 ring-1",
+    sm: "h-2 w-2 ring-1.5",
+    md: "h-2.5 w-2.5 ring-2",
+    lg: "h-3 w-3 ring-2",
+    xl: "h-3.5 w-3.5 ring-2",
+  };
+
+  const initials = fallback
+    ? fallback
+    : displayName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .substring(0, 2)
+        .toUpperCase();
+
   return (
-    <div className="relative inline-block flex-shrink-0">
+    <div className={cn("relative inline-block shrink-0", className)} {...props}>
       <div
         className={cn(
-          "relative flex items-center justify-center overflow-hidden rounded-full font-semibold border border-slate-700 bg-gradient-to-br from-indigo-900 to-slate-800 text-slate-200 select-none",
-          sizeClasses[size],
-          className
+          "relative flex items-center justify-center overflow-hidden rounded-full border border-[var(--border)] bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-pink-500/20 font-bold text-[var(--foreground)] shadow-xs select-none",
+          sizeStyles[size]
         )}
       >
-        {src && !hasError ? (
-          // eslint-disable-next-line @next/next/no-img-element
+        {src && !imageError ? (
           <img
             src={src}
-            alt={name}
-            onError={() => setHasError(true)}
+            alt={displayName}
+            onError={() => setImageError(true)}
             className="h-full w-full object-cover"
           />
         ) : (
-          <span>{getInitials(name)}</span>
+          <span>{initials}</span>
         )}
       </div>
 
-      {isOnline !== undefined && (
+      {effectiveStatus && (
         <span
           className={cn(
-            "absolute bottom-0 right-0 rounded-full border-2 border-slate-900",
-            isOnline ? "bg-emerald-500" : "bg-slate-500",
-            indicatorSizes[size]
+            "absolute bottom-0 right-0 rounded-full",
+            statusSizes[size],
+            statusColors[effectiveStatus]
           )}
         />
       )}
