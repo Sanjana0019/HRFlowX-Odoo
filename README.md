@@ -1,111 +1,123 @@
-# HRFlowX — Next-Generation Enterprise HR Management System
+# HRFlowX
 
-HRFlowX is a modern, high-performance Human Resource Management System (HRMS) built for enterprise team administration, real-time biometric attendance tracking, leave request management, automated payroll generation, document vault security, dynamic analytics, and goal tracking.
+HRFlowX is a modern Human Resource Management System built for organizations that need role-based access, attendance operations, leave workflows, payroll visibility, secure document handling, and administrative oversight in one product.
 
----
+## Live Application
 
-## 🚀 Key Features
+Production URL:
+https://hrflowx-rhg2wsl8b-sanjanasp0019-7907s-projects.vercel.app
 
-* **Authentication & Role-Based Access**: Supabase Auth with server-verified employee profiles, persistent sessions, role routing, and route protection.
-* **Employee Directory**: Full lifecycle management, skill tracking, document vaults, salary structures, and department assignments.
-* **Biometric Attendance Tracking**: Real-time punch in/out with geolocation tracking, breakdown of working hours, and correction request approval workflows.
-* **Leave & Time Off Engine**: Multi-type balance calculations (paid, sick, casual, maternity), multi-day request processing, admin approval controls, and notifications.
-* **Automated Payroll & Salary Component Calculations**: Dynamic salary structures (Basic, HRA, LTA, Standard Allowance, PF, Tax, Gross & Net Pay), automated slip generation, and employee-level access control.
-* **Secure Document Vault**: Supabase Storage file management with private buckets, time-limited signed download URLs, and metadata persistence.
-* **Realtime Push Notifications**: Supabase Realtime WebSocket subscriptions (`postgres_changes`) for automated system alerts.
-* **Live Analytics & KPI Reporting**: Real-time PostgreSQL database aggregation for attendance rates, payroll distribution, leave statistics, and department headcount.
-* **Performance, Goals & Asset Tracking**: Objectives and Key Results (OKRs), reviewer performance assessments, support ticket management, and company hardware assignments.
-* **Audit Logging & Security**: Immutable audit log tracing for key administrative actions.
+## Product Highlights
 
----
+- Role-based authentication and protected routing for admin, HR, and employee personas
+- Employee lifecycle management with profile, resume, private info, compensation, and documents
+- Attendance workflows with punch in and punch out tracking and correction requests
+- Leave application and approval flows with categorized balances
+- Payroll views with earnings and deductions breakdown
+- Secure document vault with restricted access and signed download links
+- Real-time notifications for key user and admin events
+- Analytics and operational dashboards for HR and leadership
+- Audit logs for traceability of administrative actions
+- Support, assets, goals and performance management modules
 
-## 🛠️ Technology Stack
+## Core Modules
 
-* **Frontend Framework**: Next.js 16.3 (App Router with Turbopack) & React 19
-* **State Management**: React Context API with state synchronization
-* **Styling & UI**: Vanilla CSS Design Tokens, Glassmorphism Aesthetics, Dark/Light Mode Engine, Lucide Icons
-* **Backend & Database**: Supabase PostgreSQL, Row-Level Security (RLS) Policies, Stored Procedures
-* **Realtime Engine**: Supabase Realtime Broadcast Channels
-* **File Storage**: Supabase Storage Buckets with Signed URLs
+- Admin Dashboard and Analytics
+- Employee Directory and Detail Management
+- Attendance Management
+- Leave Approvals and Self-Service Leave Requests
+- Payroll Master and Employee Payroll Views
+- Documents Vault
+- Announcements and Notification Center
+- Audit Logs and Settings
 
----
+## Technology Stack
 
-## 🏗️ System Architecture
+Frontend and App Framework:
+- Next.js 16.3.2 (App Router)
+- React 19.2.8
+- TypeScript 5
 
+Data and Backend Services:
+- Supabase Auth
+- Supabase PostgreSQL
+- Supabase Realtime
+- Supabase Storage
+
+UI and Experience:
+- Custom design tokens and global CSS architecture
+- Tailwind CSS 4 toolchain
+- Lucide React icons
+- Recharts for data visualization
+- Framer Motion for interaction and transitions
+
+Developer Tooling:
+- ESLint 9
+- next lint configuration
+
+## Security Model
+
+- Route-level protection through middleware
+- Row-Level Security policies in PostgreSQL for tenant-safe data access
+- Signed URLs for private document access
+- Role checks for administrative actions and privileged views
+
+## Project Structure
+
+- app: Next.js app entry, layout, loading, error, and route-level UI shell
+- components: Feature-oriented UI and module screens
+- lib: Data utilities, Supabase clients, and state management
+- supabase: Schema, seed data, and migration SQL
+- docs: Architecture, database details, and demo walkthrough
+- types: Shared TypeScript domain types
+
+## Getting Started
+
+1. Install dependencies.
+
+```bash
+npm install
 ```
-[ Next.js 16 Client App Router ]
-           │
-           ├──► [ Supabase Browser Client ] ──► [ Supabase Auth ]
-           │
-           ├──► [ Row-Level Security (RLS) ] ──► [ PostgreSQL Database ]
-           │
-           ├──► [ Storage Private Buckets ] ──► [ Supabase Storage ]
-           │
-           └──► [ Realtime WebSockets ] ──► [ Push Notifications ]
-```
 
----
-
-## 🔒 Security & Row-Level Security (RLS)
-
-HRFlowX enforces security directly at the PostgreSQL layer through Row-Level Security policies:
-* **Employee Isolation**: Employees can only read and update their own profiles, attendance records, leave balances, payslips, goals, and documents.
-* **Company Isolation**: Multi-tenant database boundary functions (`current_company_id()`, `current_employee_id()`, `is_admin_or_hr()`) prevent cross-company data exposure.
-* **Private Storage**: Documents and confidential files are stored in private Supabase Storage buckets accessible only through short-lived signed URLs.
-
----
-
-## ⚙️ Environment Variables Setup
-
-Create a `.env.local` file in the root directory:
+2. Create an environment file named .env.local in the project root.
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-*Note: Never commit `.env.local` or expose `service_role` keys.*
+3. Apply database schema and migration SQL from the supabase folder to your Supabase project.
 
----
+4. Run the development server.
 
-## 💻 Local Development Setup
+```bash
+npm run dev
+```
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-org/HRFlowX-Odoo.git
-   cd HRFlowX-Odoo
-   ```
+5. Build for production.
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+```bash
+npm run build
+npm run start
+```
 
-3. **Run database migrations**:
-   Apply SQL files from `supabase/migrations/` in your Supabase SQL Editor.
+## Available Scripts
 
-4. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
+- npm run dev: Starts local development server
+- npm run build: Creates production build
+- npm run start: Starts production server
+- npm run lint: Runs lint checks
 
-5. **Build for production**:
-   ```bash
-   npm run build
-   npm run start
-   ```
+## Demo Flow
 
----
+Use the presentation script in docs/DEMO_CHECKLIST.md for a complete admin-to-employee walkthrough.
 
-## 🔑 Demo Accounts & Live Presentation Instructions
+## Additional Documentation
 
-For live presentation and evaluation purposes, use the following demo credentials or toggle demo mode:
+- docs/ARCHITECTURE.md
+- docs/DATABASE.md
+- docs/DEMO_CHECKLIST.md
 
-* **Admin / HR Account**:
-  * Email: `admin@hrflowx-demo.com`
-  * Role: `Admin / HR Administrator`
-* **Employee Account**:
-  * Email: `employee@hrflowx-demo.com`
-  * Role: `Software Engineer`
+## License
 
-*Refer to `docs/DEMO_CHECKLIST.md` for the complete step-by-step presentation script.*
+This repository is currently private and does not define a public license.
