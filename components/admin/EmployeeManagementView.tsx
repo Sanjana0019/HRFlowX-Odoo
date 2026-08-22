@@ -37,6 +37,7 @@ import { EmployeeDetailModal } from "@/components/employee/EmployeeDetailModal";
 export function EmployeeManagementView() {
   const {
     employees,
+    isLoadingEmployees,
     addEmployee,
     deleteEmployee,
     attendanceRecords,
@@ -215,8 +216,18 @@ export function EmployeeManagementView() {
         </span>
       </div>
 
-      {/* VIEW MODE 1: KANBAN GRID CARDS MATCHING EXCALIDRAW WIREFRAME 2 */}
-      {employeeViewMode === "grid" ? (
+      {isLoadingEmployees ? (
+        <div className="flex flex-col items-center justify-center p-12 bg-slate-900/40 rounded-2xl border border-slate-800 space-y-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+          <p className="text-xs text-slate-400 font-medium">Fetching employee profiles from Supabase database...</p>
+        </div>
+      ) : filteredEmployees.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 bg-slate-900/40 rounded-2xl border border-slate-800 space-y-3 text-center">
+          <Users className="h-10 w-10 text-slate-500" />
+          <p className="text-sm font-semibold text-slate-300">No employees match your search or filter</p>
+          <p className="text-xs text-slate-500">Try adjusting your search criteria or onboard a new employee profile.</p>
+        </div>
+      ) : employeeViewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredEmployees.map((emp) => {
             const attStatus = getAttendanceStatusForEmp(emp.employeeId);

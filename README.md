@@ -1,151 +1,111 @@
-# HRFlowX — Human Resource Management System (HRMS)
-> *"Streamline People, Power Performance."*
+# HRFlowX — Next-Generation Enterprise HR Management System
 
-**HRFlowX** is an enterprise-grade, full-stack Human Resource Management SaaS platform designed for high-growth tech enterprises, engineering organizations, and distributed global workforces.
-
----
-
-## 🌟 Key Functional Modules
-
-### 1. Enterprise Authentication & Deterministic ID Generation
-- Deterministic Employee / Login ID generation formula:  
-  `[Company Initials][Employee Initials][Joining Year][4-Digit Sequence]` (e.g. `HXAR20230001` or `HXadmin0000`).
-- Role-Based Access Control (**ADMIN / HR** vs **EMPLOYEE**) with server-side and client-side view guards.
-- 1-Click Interactive Demo Access for instant evaluator testing.
-
-### 2. Live Biometric Punch & Systray Widget
-- Real-time work timer with active status dot indicators (*Green = Present, Red = Offline, Airplane = On Leave, Yellow = Absent*).
-- Interactive Attendance Calendar (*Green = Present, Red = Absent, Purple = Half Day, Blue = On Leave, Orange = Late*).
-- Attendance Correction Request workflow with HR approval and live timesheet updating.
-
-### 3. Dynamic Salary Engine & Wage Calculation
-- Percentage-based auto-rebalancing of monthly wages:
-  - **Basic Salary**: 50.00% of Monthly Wage
-  - **House Rent Allowance (HRA)**: 50.00% of Basic (25% of Wage)
-  - **Standard Allowance**: 8.33% of Wage
-  - **Performance Bonus**: 8.33% of Basic
-  - **Leave Travel Allowance (LTA)**: 8.33% of Basic
-  - **Fixed Allowance**: Remainder ($Wage - \sum Components$)
-  - **Statutory Deductions**: Provident Fund (12.00% of Basic) & Professional Tax.
-  - **Net Take-Home Pay**: Gross Earnings minus statutory deductions.
-- Printable/downloadable receipt-style Payslip Modal and batch payroll disbursement cycles.
-
-### 4. Time Off / Leave Quota Automation
-- Automated balance calculations ($Allocated - Approved$).
-- Leave Types: Paid Leave, Sick Leave (with medical certificate attachment), Unpaid Leave.
-- Real-time notification dispatch upon approval/rejection.
-
-### 5. Corporate Governance & Global Branches
-- Company profile & branding with logo management.
-- Regional Office Branches (San Francisco HQ, New York, Austin, London EMEA).
-- Published Enterprise Policies and Employee Handbook.
-- Roles & Permissions (RBAC) Matrix.
-
-### 6. Performance, OKRs & Hardware Assets
-- Goal tracking with interactive progress sliders ($0-100\%$) and target milestones.
-- Corporate Hardware Vault (MacBook Pros, UltraSharp 4K Monitors, YubiKeys).
-- Internal Help & Support ticketing system.
-
-### 7. SOC2 Compliance & Audit Trail
-- Timestamped audit logs for all CRUD operations, timesheet overrides, payroll runs, and policy changes with `.CSV` export.
+HRFlowX is a modern, high-performance Human Resource Management System (HRMS) built for enterprise team administration, real-time biometric attendance tracking, leave request management, automated payroll generation, document vault security, dynamic analytics, and goal tracking.
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 Key Features
 
-- **Framework**: Next.js 16 (App Router) + Turbopack
-- **Language**: TypeScript 5.0+ (Strict Typings)
-- **Styling**: Tailwind CSS + Custom Dark/Light Theme System
-- **Icons**: Lucide React Icons
-- **Visualizations**: Recharts Interactive Analytics
-- **Micro-Interactions**: Canvas Confetti & Framer Motion
-- **Database Schema**: PostgreSQL / Supabase Relational Schema ([`supabase/schema.sql`](file:///c:/Users/ronak/OneDrive/Desktop/odoo/supabase/schema.sql))
-- **State Management**: Unified Reactive LocalStorage State Provider
-
----
-
-## 🔑 Demo Credentials
-
-| Role | Name | Email | Login ID | Password | Access Level |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Employee** | Arjun Sharma | `employee@hrflowx.io` | `HXAS20230001` | `password123` | Self-Service Portal |
-| **HR Admin** | Priya Mehta | `admin@hrflowx.io` | `HXPM20220001` | `admin123` | Full HR Governance |
-
-*(Instant 1-Click demo logins are also available directly on the sign-in screen, or toggle roles in the top navbar / `⌘K` command center)*
+* **Authentication & Role-Based Access**: Supabase Auth with server-verified employee profiles, persistent sessions, role routing, and route protection.
+* **Employee Directory**: Full lifecycle management, skill tracking, document vaults, salary structures, and department assignments.
+* **Biometric Attendance Tracking**: Real-time punch in/out with geolocation tracking, breakdown of working hours, and correction request approval workflows.
+* **Leave & Time Off Engine**: Multi-type balance calculations (paid, sick, casual, maternity), multi-day request processing, admin approval controls, and notifications.
+* **Automated Payroll & Salary Component Calculations**: Dynamic salary structures (Basic, HRA, LTA, Standard Allowance, PF, Tax, Gross & Net Pay), automated slip generation, and employee-level access control.
+* **Secure Document Vault**: Supabase Storage file management with private buckets, time-limited signed download URLs, and metadata persistence.
+* **Realtime Push Notifications**: Supabase Realtime WebSocket subscriptions (`postgres_changes`) for automated system alerts.
+* **Live Analytics & KPI Reporting**: Real-time PostgreSQL database aggregation for attendance rates, payroll distribution, leave statistics, and department headcount.
+* **Performance, Goals & Asset Tracking**: Objectives and Key Results (OKRs), reviewer performance assessments, support ticket management, and company hardware assignments.
+* **Audit Logging & Security**: Immutable audit log tracing for key administrative actions.
 
 ---
 
-## 🚀 Quickstart & Local Installation
+## 🛠️ Technology Stack
 
-### Prerequisites
-- Node.js 18.17+ or Node.js 20+
-- npm 9+ or pnpm 8+
+* **Frontend Framework**: Next.js 16.3 (App Router with Turbopack) & React 19
+* **State Management**: React Context API with state synchronization
+* **Styling & UI**: Vanilla CSS Design Tokens, Glassmorphism Aesthetics, Dark/Light Mode Engine, Lucide Icons
+* **Backend & Database**: Supabase PostgreSQL, Row-Level Security (RLS) Policies, Stored Procedures
+* **Realtime Engine**: Supabase Realtime Broadcast Channels
+* **File Storage**: Supabase Storage Buckets with Signed URLs
 
-### Setup Commands
-```bash
-# 1. Clone or navigate to the project repository
-cd odoo
+---
 
-# 2. Install dependencies
-npm.cmd install
+## 🏗️ System Architecture
 
-# 3. Start development server
-npm.cmd run dev
+```
+[ Next.js 16 Client App Router ]
+           │
+           ├──► [ Supabase Browser Client ] ──► [ Supabase Auth ]
+           │
+           ├──► [ Row-Level Security (RLS) ] ──► [ PostgreSQL Database ]
+           │
+           ├──► [ Storage Private Buckets ] ──► [ Supabase Storage ]
+           │
+           └──► [ Realtime WebSockets ] ──► [ Push Notifications ]
 ```
 
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+---
+
+## 🔒 Security & Row-Level Security (RLS)
+
+HRFlowX enforces security directly at the PostgreSQL layer through Row-Level Security policies:
+* **Employee Isolation**: Employees can only read and update their own profiles, attendance records, leave balances, payslips, goals, and documents.
+* **Company Isolation**: Multi-tenant database boundary functions (`current_company_id()`, `current_employee_id()`, `is_admin_or_hr()`) prevent cross-company data exposure.
+* **Private Storage**: Documents and confidential files are stored in private Supabase Storage buckets accessible only through short-lived signed URLs.
 
 ---
 
-## 📦 Production Build & Deployment
+## ⚙️ Environment Variables Setup
 
-### Production Build Verification
-```bash
-# Run strict TypeScript check and Next.js static build
-npm.cmd run build
+Create a `.env.local` file in the root directory:
 
-# Start the production server locally
-npm.cmd run start
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-### Vercel Deployment Instructions
-1. Push this repository to GitHub / GitLab.
-2. Import the repository in [Vercel Dashboard](https://vercel.com/new).
-3. Framework Preset: **Next.js**.
-4. Root Directory: `./`.
-5. Environment Variables: copy from [`.env.example`](file:///c:/Users/ronak/OneDrive/Desktop/odoo/.env.example) if Supabase Cloud is configured.
-6. Click **Deploy**.
+*Note: Never commit `.env.local` or expose `service_role` keys.*
 
 ---
 
-## 📁 Project Architecture
+## 💻 Local Development Setup
 
-```text
-├── app/
-│   ├── globals.css         # CSS Variables, dark/light theme tokens
-│   ├── layout.tsx          # Root HTML layout with Inter font
-│   ├── page.tsx            # Entry view wrapped with StoreProvider
-│   ├── not-found.tsx       # Branded 404 error page
-│   ├── error.tsx           # Client exception boundary
-│   └── loading.tsx         # Animated loading skeleton
-├── components/
-│   ├── admin/              # Executive Dashboard, Directory, Attendance, Payroll, Analytics
-│   ├── employee/           # Personal Dashboard, Timesheets, Time Off, Payslips, Profile
-│   ├── common/             # Navbar, Sidebar, CommandPalette, LivePunchCard, Settings
-│   ├── company/            # Company Profile, Branches, Policies, Permissions Matrix
-│   ├── goals/              # OKRs & Performance tracking
-│   ├── assets/             # Hardware provisions and equipment tracking
-│   ├── support/            # HR Support desk & FAQ
-│   ├── audit/              # SOC2 audit trail & event log
-│   ├── auth/               # Sign In / Sign Up matching wireframes
-│   └── ui/                 # Reusable UI primitives (Button, Card, Badge, Dialog, Input)
-├── lib/
-│   ├── mockData.ts         # 25+ Seeded employees, attendance, leaves, payslips, assets
-│   ├── store.tsx           # Reactive unified state store with LocalStorage auto-persistence
-│   ├── utils.ts            # Dynamic wage calculation engine & deterministic ID generator
-│   └── supabase.ts         # Supabase client connector
-├── supabase/
-│   └── schema.sql          # 12 Relational tables with foreign keys and RLS policies
-└── types/
-    └── index.ts            # Strict TypeScript interfaces
-```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-org/HRFlowX-Odoo.git
+   cd HRFlowX-Odoo
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Run database migrations**:
+   Apply SQL files from `supabase/migrations/` in your Supabase SQL Editor.
+
+4. **Start the development server**:
+   ```bash
+   npm run dev
+   ```
+
+5. **Build for production**:
+   ```bash
+   npm run build
+   npm run start
+   ```
+
+---
+
+## 🔑 Demo Accounts & Live Presentation Instructions
+
+For live presentation and evaluation purposes, use the following demo credentials or toggle demo mode:
+
+* **Admin / HR Account**:
+  * Email: `admin@hrflowx-demo.com`
+  * Role: `Admin / HR Administrator`
+* **Employee Account**:
+  * Email: `employee@hrflowx-demo.com`
+  * Role: `Software Engineer`
+
+*Refer to `docs/DEMO_CHECKLIST.md` for the complete step-by-step presentation script.*

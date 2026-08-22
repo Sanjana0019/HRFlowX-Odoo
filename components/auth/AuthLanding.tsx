@@ -22,10 +22,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 export function AuthLanding() {
-  const { login, addEmployee, company, updateCompanyProfile } = useStore();
+  const { login, signUpUser, resetPassword, company, authError, setAuthError } = useStore();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Password reset modal state
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetFeedback, setResetFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
   // Sign In state
   const [loginIdentifier, setLoginIdentifier] = useState("employee@hrflowx.io");
@@ -41,50 +47,84 @@ export function AuthLanding() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
-    const success = login(loginIdentifier);
-    if (!success) {
-      setErrorMsg("Invalid credentials. Please verify your Login ID / Email.");
+    if (setAuthError) setAuthError(null);
+    setIsSubmitting(true);
+
+    try {
+      const success = await login(loginIdentifier, password);
+      if (!success && !authError) {
+        setErrorMsg("Invalid credentials. Please verify your Login ID / Email.");
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Failed to sign in. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+    if (setAuthError) setAuthError(null);
 
     if (newPassword !== confirmPassword) {
       setErrorMsg("Passwords do not match.");
       return;
     }
 
-    if (companyName) {
-      updateCompanyProfile({ name: companyName, logo: logoUrl });
+    setIsSubmitting(true);
+    try {
+      const success = await signUpUser({
+        companyName,
+        fullName,
+        email,
+        phone,
+        password: newPassword,
+      });
+
+      if (!success && !authError) {
+        setErrorMsg("Failed to create space. Please verify email and credentials.");
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Failed to register space. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const created = addEmployee({
-      name: fullName,
-      email,
-      role: "admin",
-      jobTitle: "Founder & Chief Executive Officer",
-      department: "Executive Leadership",
-      phone,
-      monthlyWage: 25000,
-    });
-
-    login(created.employeeId);
   };
 
-  const handleOneClickLogin = (type: "employee" | "admin") => {
-    if (type === "employee") {
-      setLoginIdentifier("employee@hrflowx.io");
-      setPassword("password123");
-      login("employee@hrflowx.io", "employee");
+  const handleOneClickLogin = async (type: "employee" | "admin") => {
+    setErrorMsg("");
+    if (setAuthError) setAuthError(null);
+    setIsSubmitting(true);
+
+    try {
+      if (type === "employee") {
+        setLoginIdentifier("employee@hrflowx.io");
+        setPassword("password123");
+        await login("employee@hrflowx.io", "password123", "employee");
+      } else {
+        setLoginIdentifier("admin@hrflowx.io");
+        setPassword("admin123");
+        await login("admin@hrflowx.io", "admin123", "admin");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePasswordResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetFeedback(null);
+    if (!resetEmail) return;
+
+    const res = await resetPassword(resetEmail);
+    if (res.success) {
+      setResetFeedback({ type: "success", msg: res.message });
     } else {
-      setLoginIdentifier("admin@hrflowx.io");
-      setPassword("admin123");
-      login("admin@hrflowx.io", "admin");
+      setResetFeedback({ type: "error", msg: res.message });
     }
   };
 
@@ -196,9 +236,9 @@ export function AuthLanding() {
                 </button>
               </div>
 
-              {errorMsg && (
+              {(errorMsg || authError) && (
                 <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400 font-medium">
-                  {errorMsg}
+                  {errorMsg || authError}
                 </div>
               )}
 
@@ -227,9 +267,17 @@ export function AuthLanding() {
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
                         Password
                       </label>
-                      <span className="text-[11px] text-indigo-400 hover:underline cursor-pointer">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsResetModalOpen(true);
+                          setResetEmail(loginIdentifier.includes("@") ? loginIdentifier : "");
+                          setResetFeedback(null);
+                        }}
+                        className="text-[11px] text-indigo-400 hover:underline cursor-pointer"
+                      >
                         Forgot password?
-                      </span>
+                      </button>
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -251,8 +299,8 @@ export function AuthLanding() {
                     </div>
                   </div>
 
-                  <Button type="submit" variant="primary" size="lg" className="w-full font-bold shadow-indigo-600/30">
-                    SIGN IN →
+                  <Button type="submit" variant="primary" size="lg" disabled={isSubmitting} className="w-full font-bold shadow-indigo-600/30">
+                    {isSubmitting ? "AUTHENTICATING..." : "SIGN IN →"}
                   </Button>
 
                   {/* 1-Click Demo Buttons */}
@@ -263,16 +311,18 @@ export function AuthLanding() {
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
+                        disabled={isSubmitting}
                         onClick={() => handleOneClickLogin("employee")}
-                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/40 text-xs text-slate-300 font-semibold transition-all text-left"
+                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/40 text-xs text-slate-300 font-semibold transition-all text-left disabled:opacity-50"
                       >
                         <span className="text-white block font-bold">Arjun Sharma</span>
                         <span className="text-[10px] text-indigo-400 font-mono">HXAS20230001</span>
                       </button>
                       <button
                         type="button"
+                        disabled={isSubmitting}
                         onClick={() => handleOneClickLogin("admin")}
-                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-purple-500/40 text-xs text-slate-300 font-semibold transition-all text-left"
+                        className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-purple-500/40 text-xs text-slate-300 font-semibold transition-all text-left disabled:opacity-50"
                       >
                         <span className="text-white block font-bold">Priya Mehta</span>
                         <span className="text-[10px] text-purple-400 font-mono">HXPM20220001</span>
@@ -315,8 +365,8 @@ export function AuthLanding() {
                     </div>
                   </div>
 
-                  <Button type="submit" variant="primary" size="lg" className="w-full font-bold">
-                    Create Company Space →
+                  <Button type="submit" variant="primary" size="lg" disabled={isSubmitting} className="w-full font-bold">
+                    {isSubmitting ? "CREATING SPACE..." : "Create Company Space →"}
                   </Button>
 
                   {/* Explanatory note matching Wireframe 3 */}
@@ -333,6 +383,69 @@ export function AuthLanding() {
           </div>
         </div>
       </main>
+
+      {/* Password Reset Modal */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Key className="h-5 w-5 text-indigo-400" />
+                <h3 className="font-bold text-white text-sm">Reset Password</h3>
+              </div>
+              <button
+                onClick={() => setIsResetModalOpen(false)}
+                className="text-slate-400 hover:text-white text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Enter your registered work email address below to receive password recovery instructions via Supabase Auth.
+            </p>
+
+            {resetFeedback && (
+              <div
+                className={`p-3 rounded-xl border text-xs font-medium ${
+                  resetFeedback.type === "success"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                    : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                }`}
+              >
+                {resetFeedback.msg}
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordResetSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Work Email</label>
+                <Input
+                  type="email"
+                  placeholder="employee@company.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsResetModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" size="sm">
+                  Send Instructions →
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 px-6 py-4 text-center text-xs text-slate-500">
