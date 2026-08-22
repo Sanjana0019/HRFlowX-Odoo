@@ -1,15 +1,21 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from './supabase/client';
 
-// Supabase client instance using environment variables if provided
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://hrflowx-hrms-demo.supabase.co";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy";
-
-export const isSupabaseConfigured = () => {
+// Helper to check if Supabase environment variables are properly configured
+export const isSupabaseConfigured = (): boolean => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   return (
-    process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined &&
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== undefined &&
-    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("dummy")
+    Boolean(url) &&
+    Boolean(key) &&
+    !url?.includes("your-project") &&
+    !url?.includes("dummy") &&
+    !key?.includes("dummy") &&
+    !key?.includes("your-anon-key")
   );
 };
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Singleton browser client instance
+export const supabase = createBrowserClient();
+
+// Re-export browser creator for client-side usage
+export { createBrowserClient } from './supabase/client';

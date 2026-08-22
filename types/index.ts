@@ -135,6 +135,7 @@ export type SalaryStructure = DynamicSalaryStructure;
 
 export interface Employee {
   id: string;
+  auth_user_id?: string;
   employeeId: string; // e.g. "OIJO20220001" or "HXAR20230001"
   name: string;
   email: string;

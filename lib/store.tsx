@@ -44,14 +44,83 @@ import {
   INITIAL_NOTIFICATIONS,
 } from "@/lib/mockData";
 import { generateEmployeeId, calculateDynamicSalaryStructure } from "@/lib/utils";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { createBrowserClient } from "@/lib/supabase/client";
+import {
+  fetchEmployeesFromSupabase,
+  createEmployeeInSupabase,
+  updateEmployeeInSupabase,
+  updateEmployeePrivateInfoInSupabase,
+  updateEmployeeSalaryInSupabase,
+  deleteEmployeeInSupabase,
+} from "@/lib/supabase/supabaseEmployees";
+import {
+  fetchAttendanceRecordsFromSupabase,
+  fetchAttendanceRequestsFromSupabase,
+  punchInInSupabase,
+  punchOutInSupabase,
+  createAttendanceCorrectionRequestInSupabase,
+  approveAttendanceCorrectionRequestInSupabase,
+  rejectAttendanceCorrectionRequestInSupabase,
+} from "@/lib/supabase/supabaseAttendance";
+import {
+  fetchLeaveRequestsFromSupabase,
+  applyLeaveInSupabase,
+  approveLeaveInSupabase,
+  rejectLeaveInSupabase,
+  cancelLeaveInSupabase,
+} from "@/lib/supabase/supabaseLeave";
+import {
+  fetchSalarySlipsFromSupabase,
+  processPayrollInSupabase,
+} from "@/lib/supabase/supabasePayroll";
+import {
+  fetchDocumentsFromSupabase,
+  uploadDocumentToSupabase,
+  getSignedDocumentUrlFromSupabase,
+  deleteDocumentFromSupabase,
+  SupabaseDocumentRecord,
+} from "@/lib/supabase/supabaseDocuments";
+import {
+  fetchNotificationsFromSupabase,
+  createNotificationInSupabase,
+  markNotificationAsReadInSupabase,
+  markAllNotificationsAsReadInSupabase,
+  subscribeToNotificationsInSupabase,
+} from "@/lib/supabase/supabaseNotifications";
+import {
+  fetchGoalsFromSupabase,
+  createGoalInSupabase,
+  updateGoalProgressInSupabase,
+  fetchPerformanceReviewsFromSupabase,
+  fetchAssetsFromSupabase,
+  assignAssetInSupabase,
+  fetchSupportTicketsFromSupabase,
+  createSupportTicketInSupabase,
+  replySupportTicketInSupabase,
+  fetchAnnouncementsFromSupabase,
+  fetchHolidaysFromSupabase,
+  fetchAuditLogsFromSupabase,
+  createAuditLogInSupabase,
+} from "@/lib/supabase/supabaseExtended";
 
 interface AppStoreContextType {
   // Auth
   currentUser: User | null;
   currentEmployee: Employee | null;
   isAuthenticated: boolean;
-  login: (identifier: string, role?: UserRole) => boolean;
-  logout: () => void;
+  authError: string | null;
+  setAuthError: (err: string | null) => void;
+  login: (identifier: string, pass?: string, role?: UserRole) => Promise<boolean>;
+  signUpUser: (data: {
+    companyName: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    password?: string;
+  }) => Promise<boolean>;
+  resetPassword: (email: string) => Promise<{ success: boolean; message: string }>;
+  logout: () => Promise<void>;
   switchDemoRole: (role: UserRole) => void;
   changePassword: (newPass: string) => void;
 
@@ -72,6 +141,7 @@ interface AppStoreContextType {
 
   // Employees CRUD
   employees: Employee[];
+  isLoadingEmployees: boolean;
   getEmployeeById: (id: string) => Employee | undefined;
   updateEmployee: (employeeId: string, updates: Partial<Employee>) => void;
   addEmployee: (empData: {
@@ -198,7 +268,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
 
-  // Auth User (Default: Arjun Sharma)
+  // Auth User state & errors
   const [currentUser, setCurrentUser] = useState<User | null>({
     id: "usr-001",
     email: "employee@hrflowx.io",
@@ -206,6 +276,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     employeeId: "HXAS20230001",
     name: "Arjun Sharma",
   });
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState<boolean>(false);
 
   // UI state
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -215,6 +287,157 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+  // Fetch employees from Supabase if configured
+  useEffect(() => {
+    async function loadEmployees() {
+      if (isSupabaseConfigured()) {
+        setIsLoadingEmployees(true);
+        const fetched = await fetchEmployeesFromSupabase();
+        if (fetched && fetched.length > 0) {
+          setEmployees(fetched);
+        } else if (fetched && fetched.length === 0) {
+          // Table exists but is empty -> seed initial employees into Supabase
+          for (let i = 0; i < INITIAL_EMPLOYEES.length; i++) {
+            const initEmp = INITIAL_EMPLOYEES[i];
+            await createEmployeeInSupabase(
+              {
+                name: initEmp.name,
+                email: initEmp.email,
+                role: initEmp.role,
+                jobTitle: initEmp.designation,
+                department: initEmp.department,
+                monthlyWage: initEmp.salaryStructure.monthlyWage,
+                phone: initEmp.phone,
+                address: initEmp.address,
+                location: initEmp.location,
+                companyName: initEmp.companyName,
+              },
+              i
+            );
+          }
+          const reFetched = await fetchEmployeesFromSupabase();
+          if (reFetched && reFetched.length > 0) {
+            setEmployees(reFetched);
+          }
+        }
+        setIsLoadingEmployees(false);
+      }
+    }
+    loadEmployees();
+  }, []);
+
+  const [isLoadingAttendance, setIsLoadingAttendance] = useState<boolean>(false);
+  const [isLoadingLeaves, setIsLoadingLeaves] = useState<boolean>(false);
+  const [isLoadingPayroll, setIsLoadingPayroll] = useState<boolean>(false);
+
+  // Fetch Attendance from Supabase
+  useEffect(() => {
+    async function loadAttendanceData() {
+      if (isSupabaseConfigured()) {
+        setIsLoadingAttendance(true);
+        const records = await fetchAttendanceRecordsFromSupabase();
+        if (records) setAttendanceRecords(records);
+        const reqs = await fetchAttendanceRequestsFromSupabase();
+        if (reqs) setAttendanceRequests(reqs);
+        setIsLoadingAttendance(false);
+      }
+    }
+    loadAttendanceData();
+  }, []);
+
+  // Fetch Leave Requests from Supabase
+  useEffect(() => {
+    async function loadLeaveData() {
+      if (isSupabaseConfigured()) {
+        setIsLoadingLeaves(true);
+        const reqs = await fetchLeaveRequestsFromSupabase();
+        if (reqs) setLeaveRequests(reqs);
+        setIsLoadingLeaves(false);
+      }
+    }
+    loadLeaveData();
+  }, []);
+
+  const [vaultDocuments, setVaultDocuments] = useState<SupabaseDocumentRecord[]>([]);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState<boolean>(false);
+
+  // Fetch Salary Slips / Payroll from Supabase
+  useEffect(() => {
+    async function loadPayrollData() {
+      if (isSupabaseConfigured()) {
+        setIsLoadingPayroll(true);
+        const slips = await fetchSalarySlipsFromSupabase();
+        if (slips) setSalarySlips(slips);
+        setIsLoadingPayroll(false);
+      }
+    }
+    loadPayrollData();
+  }, []);
+
+  // Fetch Documents metadata from Supabase
+  useEffect(() => {
+    async function loadDocumentsData() {
+      if (isSupabaseConfigured()) {
+        setIsLoadingDocuments(true);
+        const docs = await fetchDocumentsFromSupabase();
+        if (docs) setVaultDocuments(docs);
+        setIsLoadingDocuments(false);
+      }
+    }
+    loadDocumentsData();
+  }, []);
+
+  const currentEmployee = currentUser
+    ? employees.find((e) => e.employeeId === currentUser.employeeId || e.email.toLowerCase() === currentUser.email.toLowerCase()) || employees[1]
+    : null;
+
+  // Fetch Notifications & subscribe to Realtime
+  useEffect(() => {
+    async function loadNotificationsData() {
+      if (isSupabaseConfigured()) {
+        const empId = currentUser?.employeeId || currentEmployee?.employeeId;
+        const fetched = await fetchNotificationsFromSupabase(empId);
+        if (fetched) setNotifications(fetched);
+
+        if (empId) {
+          const unsubscribe = subscribeToNotificationsInSupabase(empId, (newNotif) => {
+            setNotifications((prev) => {
+              if (prev.some((n) => n.id === newNotif.id)) return prev;
+              return [newNotif, ...prev];
+            });
+          });
+          return () => unsubscribe();
+        }
+      }
+    }
+    loadNotificationsData();
+  }, [currentUser, currentEmployee]);
+
+  // Fetch Extended Modules (Goals, Performance, Assets, Support, Announcements, Holidays, Audit)
+  useEffect(() => {
+    async function loadExtendedData() {
+      if (isSupabaseConfigured()) {
+        const empId = currentUser?.employeeId || currentEmployee?.employeeId;
+        const [g, p, a, s, ann, h, log] = await Promise.all([
+          fetchGoalsFromSupabase(empId),
+          fetchPerformanceReviewsFromSupabase(empId),
+          fetchAssetsFromSupabase(),
+          fetchSupportTicketsFromSupabase(),
+          fetchAnnouncementsFromSupabase(),
+          fetchHolidaysFromSupabase(),
+          fetchAuditLogsFromSupabase(),
+        ]);
+        if (g) setGoals(g);
+        if (a) setAssets(a);
+        if (s) setSupportTickets(s);
+        if (ann) setAnnouncements(ann);
+        if (h) setHolidays(h);
+        if (log) setAuditLogs(log);
+      }
+    }
+    loadExtendedData();
+  }, [currentUser, currentEmployee]);
 
   // Load from localStorage
   useEffect(() => {
@@ -324,10 +547,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const currentEmployee = currentUser
-    ? employees.find((e) => e.employeeId === currentUser.employeeId || e.email.toLowerCase() === currentUser.email.toLowerCase()) || employees[1]
-    : null;
-
   // Helper audit logger
   const addAuditLog = (log: Omit<AuditLog, "id" | "timestamp">) => {
     const newLog: AuditLog = {
@@ -336,6 +555,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       timestamp: "Just now",
     };
     setAuditLogs((prev) => [newLog, ...prev]);
+    if (isSupabaseConfigured()) {
+      const empId = currentUser?.employeeId || currentEmployee?.employeeId;
+      createAuditLogInSupabase(log, empId);
+    }
   };
 
   // Helper notification dispatcher
@@ -347,26 +570,169 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       read: false,
     };
     setNotifications((prev) => [newItem, ...prev]);
+    if (isSupabaseConfigured()) {
+      const empId = currentUser?.employeeId || currentEmployee?.employeeId;
+      if (empId) {
+        createNotificationInSupabase(empId, item.title, item.message, item.type);
+      }
+    }
   };
 
-  // Authentication
-  const login = (identifier: string, targetRole?: UserRole) => {
+  // Helper to map and verify Supabase Auth user to an employee record in state/DB
+  const verifyAndBindSupabaseUser = (authUser: any) => {
+    if (!authUser) {
+      setCurrentUser(null);
+      return;
+    }
+    const userEmail = authUser.email?.toLowerCase();
+    
+    // Find matching employee by auth_user_id or email
+    const emp = employees.find(
+      (e) => (e.auth_user_id && e.auth_user_id === authUser.id) || e.email.toLowerCase() === userEmail
+    );
+
+    if (!emp) {
+      setAuthError("No active employee profile is linked to this account. Please contact your HR Administrator.");
+      setCurrentUser(null);
+      return;
+    }
+
+    // Role MUST be derived directly from the verified database/store employee record!
+    const verifiedRole: UserRole = emp.role;
+
+    if (!emp.auth_user_id) {
+      emp.auth_user_id = authUser.id;
+    }
+
+    setCurrentUser({
+      id: authUser.id || `usr-${emp.employeeId}`,
+      email: emp.email,
+      role: verifiedRole,
+      employeeId: emp.employeeId,
+      name: emp.name,
+      avatar: emp.avatar,
+    });
+    setAuthError(null);
+  };
+
+  // Supabase auth state listener
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    const supabase = createBrowserClient();
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        verifyAndBindSupabaseUser(session.user);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        verifyAndBindSupabaseUser(session.user);
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [employees]);
+
+  // Authentication via Supabase Auth
+  const login = async (identifier: string, pass: string = "password123", targetRole?: UserRole): Promise<boolean> => {
+    setAuthError(null);
     const clean = identifier.trim().toLowerCase();
+
+    // Map identifier to employee
     let emp = employees.find(
-      (e) =>
-        e.email.toLowerCase() === clean ||
-        e.employeeId.toLowerCase() === clean
+      (e) => e.email.toLowerCase() === clean || e.employeeId.toLowerCase() === clean
     );
 
     if (!emp) {
       if (clean.includes("admin") || targetRole === "admin") {
         emp = employees.find((e) => e.role === "admin") || employees[0];
-      } else {
+      } else if (clean.includes("employee") || targetRole === "employee") {
         emp = employees.find((e) => e.role === "employee") || employees[1];
       }
     }
 
-    if (emp) {
+    const targetEmail = emp ? emp.email : (clean.includes("@") ? clean : `${clean}@hrflowx.io`);
+
+    if (isSupabaseConfigured()) {
+      const supabase = createBrowserClient();
+
+      let authenticatedUser = null;
+      let authErr: string | null = null;
+
+      const signInRes = await supabase.auth.signInWithPassword({
+        email: targetEmail,
+        password: pass,
+      });
+
+      if (signInRes.data?.user) {
+        authenticatedUser = signInRes.data.user;
+      } else {
+        authErr = signInRes.error?.message || "Authentication failed";
+        if (
+          signInRes.error &&
+          (signInRes.error.message.includes("Invalid login credentials") ||
+            signInRes.error.message.includes("User not found"))
+        ) {
+          const signUpRes = await supabase.auth.signUp({
+            email: targetEmail,
+            password: pass,
+            options: {
+              data: { full_name: emp ? emp.name : "HR Personnel" },
+            },
+          });
+          if (signUpRes.data?.user) {
+            authenticatedUser = signUpRes.data.user;
+            authErr = null;
+          }
+        }
+      }
+
+      if (authErr || !authenticatedUser) {
+        setAuthError(authErr || "Invalid credentials. Please verify your login details.");
+        return false;
+      }
+
+      const currentEmpMatch = employees.find(
+        (e) =>
+          (e.auth_user_id && e.auth_user_id === authenticatedUser.id) ||
+          e.email.toLowerCase() === targetEmail.toLowerCase()
+      );
+
+      if (!currentEmpMatch) {
+        await supabase.auth.signOut();
+        setAuthError(
+          "No active employee profile is linked to this account. Please contact your HR Administrator."
+        );
+        setCurrentUser(null);
+        return false;
+      }
+
+      verifyAndBindSupabaseUser(authenticatedUser);
+      setActiveView("dashboard");
+
+      addAuditLog({
+        user: currentEmpMatch.name,
+        userRole: currentEmpMatch.role,
+        action: "Logged In (Supabase Auth)",
+        resource: "Auth",
+        target: currentEmpMatch.employeeId,
+        description: `Authenticated via Supabase Auth as ${currentEmpMatch.role === "admin" ? "HR Admin" : "Employee"}`,
+        type: "system",
+      });
+
+      return true;
+    } else {
+      if (!emp) {
+        setAuthError("No active employee profile found. Please check your credentials.");
+        return false;
+      }
+
       setCurrentUser({
         id: `usr-${emp.employeeId}`,
         email: emp.email,
@@ -375,6 +741,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         name: emp.name,
         avatar: emp.avatar,
       });
+      setAuthError(null);
       setActiveView("dashboard");
       addAuditLog({
         user: emp.name,
@@ -387,10 +754,91 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
       return true;
     }
-    return false;
   };
 
-  const logout = () => {
+  const signUpUser = async (data: {
+    companyName: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    password?: string;
+  }): Promise<boolean> => {
+    setAuthError(null);
+    const pass = data.password || "password123";
+
+    if (isSupabaseConfigured()) {
+      const supabase = createBrowserClient();
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: pass,
+        options: {
+          data: {
+            full_name: data.fullName,
+            company_name: data.companyName,
+          },
+        },
+      });
+
+      if (error) {
+        setAuthError(error.message);
+        return false;
+      }
+
+      if (data.companyName) {
+        updateCompanyProfile({ name: data.companyName });
+      }
+
+      const newEmp = addEmployee({
+        name: data.fullName,
+        email: data.email,
+        role: "admin",
+        jobTitle: "Founder & Chief Executive Officer",
+        department: "Executive Leadership",
+        phone: data.phone,
+        monthlyWage: 25000,
+      });
+
+      if (authData.user) {
+        newEmp.auth_user_id = authData.user.id;
+        verifyAndBindSupabaseUser(authData.user);
+      }
+      return true;
+    } else {
+      if (data.companyName) {
+        updateCompanyProfile({ name: data.companyName });
+      }
+      const created = addEmployee({
+        name: data.fullName,
+        email: data.email,
+        role: "admin",
+        jobTitle: "Founder & Chief Executive Officer",
+        department: "Executive Leadership",
+        phone: data.phone,
+        monthlyWage: 25000,
+      });
+      await login(created.email, pass, "admin");
+      return true;
+    }
+  };
+
+  const resetPassword = async (email: string): Promise<{ success: boolean; message: string }> => {
+    setAuthError(null);
+    if (isSupabaseConfigured()) {
+      const supabase = createBrowserClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) {
+        return { success: false, message: error.message };
+      }
+      return { success: true, message: "Password reset instructions have been sent to your email." };
+    }
+    return { success: true, message: "Password reset link sent (demo mode)." };
+  };
+
+  const logout = async () => {
+    if (isSupabaseConfigured()) {
+      const supabase = createBrowserClient();
+      await supabase.auth.signOut();
+    }
     if (currentEmployee) {
       addAuditLog({
         user: currentEmployee.name,
@@ -403,6 +851,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
     }
     setCurrentUser(null);
+    setActiveView("dashboard");
   };
 
   const switchDemoRole = (role: UserRole) => {
@@ -549,6 +998,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return [newRecord, ...filtered];
     });
 
+    if (isSupabaseConfigured()) {
+      punchInInSupabase(currentEmployee.employeeId, location).then((rec) => {
+        if (rec) {
+          setAttendanceRecords((prev) =>
+            prev.map((r) => (r.date === todayStr && r.employeeId === currentEmployee.employeeId ? rec : r))
+          );
+        }
+      });
+    }
+
     addAuditLog({
       user: currentEmployee.name,
       userRole: currentEmployee.role,
@@ -592,6 +1051,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     setAttendanceRecords((prev) => prev.map((r) => (r.id === todayAttendance.id ? updatedRecord : r)));
 
+    if (isSupabaseConfigured()) {
+      punchOutInSupabase(currentEmployee.employeeId).then((rec) => {
+        if (rec) {
+          setAttendanceRecords((prev) => prev.map((r) => (r.id === todayAttendance.id ? rec : r)));
+        }
+      });
+    }
+
     addAuditLog({
       user: currentEmployee.name,
       userRole: currentEmployee.role,
@@ -626,6 +1093,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
 
     setAttendanceRequests((prev) => [newReq, ...prev]);
+
+    if (isSupabaseConfigured()) {
+      createAttendanceCorrectionRequestInSupabase(currentEmployee.employeeId, data).then((created) => {
+        if (created) {
+          setAttendanceRequests((prev) => prev.map((r) => (r.id === newReq.id ? created : r)));
+        }
+      });
+    }
 
     addNotification({
       type: "attendance_correction_requested",
@@ -694,6 +1169,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
+    if (isSupabaseConfigured()) {
+      approveAttendanceCorrectionRequestInSupabase(id, currentUser?.employeeId, comment);
+    }
+
     addNotification({
       type: "attendance_correction_approved",
       title: "Attendance Correction Approved ✓",
@@ -726,6 +1205,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           : r
       )
     );
+
+    if (isSupabaseConfigured()) {
+      rejectAttendanceCorrectionRequestInSupabase(id, currentUser?.employeeId, comment);
+    }
   };
 
   // Employees CRUD
@@ -737,6 +1220,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setEmployees((prev) =>
       prev.map((e) => (e.employeeId === employeeId || e.id === employeeId ? { ...e, ...updates } : e))
     );
+    if (isSupabaseConfigured()) {
+      updateEmployeeInSupabase(employeeId, updates);
+    }
     addAuditLog({
       user: currentUser?.name || "Admin",
       userRole: currentUser?.role || "admin",
@@ -816,6 +1302,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     setEmployees((prev) => [newEmp, ...prev]);
 
+    if (isSupabaseConfigured()) {
+      createEmployeeInSupabase(
+        {
+          ...data,
+          companyName: company.name,
+        },
+        employees.length
+      ).then((createdDbEmp) => {
+        if (createdDbEmp) {
+          setEmployees((prev) =>
+            prev.map((e) => (e.email === data.email ? createdDbEmp : e))
+          );
+        }
+      });
+    }
+
     addAuditLog({
       user: "Sarah Jenkins",
       userRole: "admin",
@@ -837,7 +1339,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteEmployee = (employeeId: string) => {
-    setEmployees((prev) => prev.filter((e) => e.employeeId !== employeeId));
+    setEmployees((prev) => prev.filter((e) => e.employeeId !== employeeId && e.id !== employeeId));
+    if (isSupabaseConfigured()) {
+      deleteEmployeeInSupabase(employeeId);
+    }
   };
 
   const updateEmployeeResume = (employeeId: string, resume: Partial<ResumeInfo>) => {
@@ -850,6 +1355,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setEmployees((prev) =>
       prev.map((e) => (e.employeeId === employeeId ? { ...e, privateInfo: { ...e.privateInfo, ...privateInfo } } : e))
     );
+    if (isSupabaseConfigured()) {
+      updateEmployeePrivateInfoInSupabase(employeeId, privateInfo);
+    }
   };
 
   const updateEmployeeSalary = (employeeId: string, wage: number, days: number = 5, hours: number = 40, breakTime: number = 60) => {
@@ -857,6 +1365,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setEmployees((prev) =>
       prev.map((e) => (e.employeeId === employeeId ? { ...e, salaryStructure: updatedStructure } : e))
     );
+    if (isSupabaseConfigured()) {
+      updateEmployeeSalaryInSupabase(employeeId, wage, days, hours, breakTime);
+    }
 
     addAuditLog({
       user: "Sarah Jenkins",
@@ -940,6 +1451,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     setLeaveRequests((prev) => [newLeave, ...prev]);
 
+    if (isSupabaseConfigured()) {
+      applyLeaveInSupabase(currentEmployee.employeeId, data).then((created) => {
+        if (created) {
+          setLeaveRequests((prev) => prev.map((l) => (l.id === newLeave.id ? created : l)));
+        }
+      });
+    }
+
     addAuditLog({
       user: currentEmployee.name,
       userRole: currentEmployee.role,
@@ -978,7 +1497,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       )
     );
 
-    // Deduct leave balance
+    // Deduct leave balance locally
     setEmployees((prev) =>
       prev.map((emp) => {
         if (emp.employeeId === leave.employeeId) {
@@ -998,6 +1517,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return emp;
       })
     );
+
+    if (isSupabaseConfigured()) {
+      approveLeaveInSupabase(leaveId, currentUser?.employeeId, comment);
+    }
 
     addAuditLog({
       user: "Sarah Jenkins",
@@ -1035,6 +1558,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       )
     );
 
+    if (isSupabaseConfigured()) {
+      rejectLeaveInSupabase(leaveId, currentUser?.employeeId, comment);
+    }
+
     addNotification({
       type: "leave_rejected",
       title: "Time Off Request Declined",
@@ -1044,9 +1571,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const cancelLeave = (leaveId: string) => {
-    setLeaveRequests((prev) =>
-      prev.map((l) => (l.id === leaveId && l.status === "pending" ? { ...l, status: "cancelled" } : l))
-    );
+    setLeaveRequests((prev) => prev.map((l) => (l.id === leaveId ? { ...l, status: "cancelled" } : l)));
+    if (isSupabaseConfigured()) {
+      cancelLeaveInSupabase(leaveId);
+    }
   };
 
   // Payroll
@@ -1127,22 +1655,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Goals
   const addGoal = (g: Omit<Goal, "id">) => {
-    const newG: Goal = { ...g, id: `goal-${Date.now()}` };
-    setGoals((prev) => [newG, ...prev]);
+    const newGoal: Goal = { ...g, id: `goal-${Date.now()}` };
+    setGoals((prev) => [newGoal, ...prev]);
+    if (isSupabaseConfigured()) {
+      const empId = currentUser?.employeeId || currentEmployee?.employeeId;
+      if (empId) createGoalInSupabase(g, empId);
+    }
   };
 
   const updateGoalProgress = (id: string, progress: number, status?: Goal["status"]) => {
     setGoals((prev) =>
-      prev.map((g) =>
-        g.id === id
-          ? {
-              ...g,
-              progress,
-              status: status || (progress >= 100 ? "completed" : progress < 40 ? "behind" : "on_track"),
-            }
-          : g
-      )
+      prev.map((g) => (g.id === id ? { ...g, progress, ...(status ? { status } : {}) } : g))
     );
+    if (isSupabaseConfigured()) {
+      updateGoalProgressInSupabase(id, progress, status);
+    }
   };
 
   const deleteGoal = (id: string) => {
@@ -1173,6 +1700,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           : a
       )
     );
+    if (isSupabaseConfigured()) {
+      assignAssetInSupabase(assetId, employeeId);
+    }
   };
 
   const deleteAsset = (id: string) => {
@@ -1188,21 +1718,36 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       createdAt: new Date().toISOString().split("T")[0],
     };
     setSupportTickets((prev) => [newTicket, ...prev]);
+    if (isSupabaseConfigured()) {
+      const empId = currentUser?.employeeId || currentEmployee?.employeeId;
+      if (empId) createSupportTicketInSupabase(t, empId);
+    }
   };
 
   const replySupportTicket = (id: string, reply: string, status: SupportTicket["status"] = "in_progress") => {
     setSupportTickets((prev) =>
       prev.map((t) => (t.id === id ? { ...t, hrReply: reply, status } : t))
     );
+    if (isSupabaseConfigured()) {
+      replySupportTicketInSupabase(id, reply, status);
+    }
   };
 
-  // Notifications
+
+
   const markNotificationAsRead = (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    if (isSupabaseConfigured()) {
+      markNotificationAsReadInSupabase(id);
+    }
   };
 
   const markAllNotificationsAsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    if (isSupabaseConfigured()) {
+      const empId = currentUser?.employeeId || currentEmployee?.employeeId;
+      if (empId) markAllNotificationsAsReadInSupabase(empId);
+    }
   };
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
@@ -1213,7 +1758,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         currentUser,
         currentEmployee,
         isAuthenticated: Boolean(currentUser),
+        authError,
+        setAuthError,
         login,
+        signUpUser,
+        resetPassword,
         logout,
         switchDemoRole,
         changePassword,
@@ -1232,6 +1781,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         togglePolicyPublish,
 
         employees,
+        isLoadingEmployees,
         getEmployeeById,
         updateEmployee,
         addEmployee,
